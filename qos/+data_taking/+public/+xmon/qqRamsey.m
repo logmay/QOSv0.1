@@ -12,7 +12,7 @@ function qqRamsey(varargin)
 % bias qubit q1 or q2, drive qubit q1 or q2 and readout qubit q1 and q2,
 % q1, q2 all has to be the selected qubits in the current session,
 % 
-% <_o_> = twoQRamsey('qubit1',_o&c_,'qubit2',_o&c_,...
+% <_o_> = twoQRamsey('qubit1',_o|c_,'qubit2',_o|c_,...
 %       'biasAmp1',[_f_],'biasDelay1',<_i_>,...
 %		'biasAmp2',[_f_],'biasDelay2',<_i_>,...
 %       'theta',[_i_],'time',[_i_],...
@@ -22,7 +22,7 @@ function qqRamsey(varargin)
 % _c_: char or char string
 % _b_: boolean
 % _o_: object
-% a&b: default type is a, but type b is also acceptable
+% a|b: default type is a, but type b is also acceptable
 % []: can be an array, scalar also acceptable
 % {}: must be a cell array
 % <>: optional, for input arguments, assume the default value if not specified

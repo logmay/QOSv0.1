@@ -1,84 +1,127 @@
 function varargout = iq2prob_01(varargin)
+% supports multiple qubits parallel calibration
+%
 % iq2prob_01: calibrate iq to qubit state probability, |0> and |1>
 % 
-% <[_f_]> = iq2prob_01('qubit',_c&o_,'numSamples',_i_,...
-%       'gui',<_b_>,'save',<_b_>)
+% <[_f_]> = iq2prob_01_multiplexed('qubits',[_c&o_],'numSamples',_i_,...
+%       'checkResult',<_b_>,'gui',<_b_>,'save',<_b_>)
 % _f_: float
 % _i_: integer
 % _c_: char or char string
 % _b_: boolean
-% _o_: object
+% _o_: objectve
 % a&b: default type is a, but type b is also acceptable
 % []: can be an array, scalar also acceptable
 % {}: must be a cell array
 % <>: optional, for input arguments, assume the default value if not specified
 % arguments order not important as long as the form correct pairs.
-
 % Yulin Wu, 2017
 
     import qes.*
     import sqc.*
     import sqc.op.physical.*
+    import sqc.util.getQSettings
 	
 	numSamples_MIN = 1e4;
 	
-	args = util.processArgs(varargin,{'gui',false,'save',true});
-	q = data_taking.public.util.getQubits(args,{'qubit'});
-	
+	args = util.processArgs(varargin,{'fineTune',false,'gui',false,'save',true});
+	qubits = args.qubits;
+	if ~iscell(qubits)
+		qubits = {qubits};
+    end
+
     if args.numSamples < numSamples_MIN
         throw(MException('QOS_iq2prob_01:numSamplesTooSmall',...
 			sprintf('numSamples too small, %0.0f minimu.', numSamples_MIN)));
     end
-
-    X = gate.X(q);
-    R = measure.resonatorReadout(q);
-    R.delay = q.g_XY_ln; 
-
-    num_reps = ceil(args.numSamples/q.r_avg);
-    iq_raw_1 = NaN*ones(num_reps,q.r_avg);
-    for ii = 1:num_reps
-        X.Run();
-        R.Run();
-        iq_raw_1(ii,:) = R.extradata;
-    end
-    iq_raw_1 = iq_raw_1(:).';
-
-    iq_raw_0 = NaN*ones(num_reps,q.r_avg);
-    for ii = 1:num_reps
-        R.Run();
-        iq_raw_0(ii,:) = R.extradata;
-    end
-    iq_raw_0 = iq_raw_0(:).';
-
-    [center0, center1,F00,F11, hf] =... 
-		data_taking.public.dataproc.iq2prob_centers(iq_raw_0,iq_raw_1,~args.gui);
-
-    if ischar(args.save)
-        args.save = false;
-        choice  = questdlg('Update settings?','Save options',...
-                'Yes','No','No');
-        if ~isempty(choice) && strcmp(choice, 'Yes')
-            args.save = true;
+    
+    N = 3000; 
+    numQs = numel(qubits);
+    for ii = 1:numQs
+        if ischar(qubits{ii})
+            qubits{ii} = sqc.util.qName2Obj(qubits{ii});
         end
-    end
-    if args.save
-        QS = qes.qSettings.GetInstance();
-		QS.saveSSettings({q.name,'r_iq2prob_center0'},center0);
-        QS.saveSSettings({q.name,'r_iq2prob_center1'},center1);
-		QS.saveSSettings({q.name,'r_iq2prob_fidelity'},...
-			sprintf('[%0.3f,%0.3f]',F00,F11));
-        % QS.saveSSettings({q.name,'r_iq2prob_01rPoint'},rPoint);
-        % QS.saveSSettings({q.name,'r_iq2prob_01angle'},ang);
-        % QS.saveSSettings({q.name,'r_iq2prob_01threshold'},threshold);
-        % QS.saveSSettings({q.name,'r_iq2prob_01polarity'},num2str(polarity,'%0.0f'));
-        if ~isempty(hf) && isvalid(hf)
-            dataSvName = fullfile(QS.loadSSettings('data_path'),...
-                ['iqRaw_',q.name,'_',datestr(now,'yymmddTHHMMSS'),...
-                num2str(ceil(99*rand(1,1)),'%0.0f'),'_.fig']);
-            saveas(hf,dataSvName);
-        end
+		qubits{ii}.r_avg = N;
     end
 
-	varargout{1} = center0;
-	varargout{1} = center1;
+    R = measure.resonatorReadout(qubits);
+    RDelay = 0;
+    X = cell(1,numQs);
+    for ii = 1:numQs
+		X{ii} = gate.X(qubits{ii});
+		RDelay = max(RDelay,X{ii}.length);
+    end
+    R.delay = RDelay; 
+
+    num_reps = ceil(args.numSamples/N);
+    iq_raw_1 = nan(numQs,num_reps*N);
+    sInd = 1;
+    for ii = 1:num_reps
+        for jj = 1:numQs
+            X{jj}.Run();
+        end
+        R.Run();
+        iq_raw_1(:,sInd:sInd+N-1) = R.extradata;
+        sInd = sInd+N;
+    end
+
+    iq_raw_0 = nan(numQs,num_reps*N);
+    sInd = 1;
+    for ii = 1:num_reps
+        R.Run();
+        iq_raw_0(:,sInd:sInd+N-1) = R.extradata;
+        sInd = sInd+N;
+    end
+
+	for ii = 1:numQs
+        q = qubits{ii};
+        [center0, center1,F00,F11, hf,axs,iqWidth] =... 
+            data_taking.public.dataproc.iq2prob_centers(iq_raw_0(ii,:),iq_raw_1(ii,:),~args.gui);
+        r_iq2prob_center0_o = getQSettings('r_iq2prob_center0',q.name);
+        r_iq2prob_center1_o = getQSettings('r_iq2prob_center1',q.name);
+        if ~isempty(axs)
+            try 
+                hold(axs(1),'on');
+                plot(axs(1),r_iq2prob_center0_o,'+','Color','w','MarkerSize',10,'LineWidth',0.5);
+                plot(axs(1),r_iq2prob_center1_o,'+','Color','g','MarkerSize',10,'LineWidth',0.5);
+                hold(axs(1),'off');
+            catch
+            end
+        end
+        if ischar(args.save)
+            args.save = false;
+            choice  = questdlg('Update settings?','Save options',...
+                    'Yes','No','No');
+            if ~isempty(choice) && strcmp(choice, 'Yes')
+                args.save = true;
+            end
+        end
+        if args.save
+            QS = qes.qSettings.GetInstance();
+            
+            if args.fineTune
+                D0 = abs(center0 - r_iq2prob_center0_o);
+                if ~isempty(q.r_iqWidth) && D0 > 0.5*q.r_iqWidth
+                    throw(exceptions.QRuntimeException('iq2prob_01:LargeChange',...
+                        [q.name,': Large change measured on r_iq2prob_center0']));
+                elseif abs(center1 - center0) < 0.5*abs(r_iq2prob_center1_o - r_iq2prob_center0_o)
+                    throw(exceptions.QRuntimeException('iq2prob_01:LargeChange',...
+                        [q.name,': Large change measured on center1 center0 distance']));
+                end
+            end
+            QS.saveSSettings({q.name,'r_iq2prob_center0'},center0);
+            QS.saveSSettings({q.name,'r_iq2prob_center1'},center1);
+            QS.saveSSettings({q.name,'r_iq2prob_fidelity'},...
+                sprintf('[%0.3f,%0.3f]',F00,F11));
+            QS.saveSSettings({q.name,'r_iqWidth'},iqWidth);
+            if ~isempty(hf) && isvalid(hf)
+                dataSvName = fullfile(QS.loadSSettings('data_path'),...
+                    ['iqRaw_',q.name,'_',datestr(now,'yymmddTHHMMSS'),...
+                    num2str(ceil(99*rand(1,1)),'%0.0f'),'_.fig']);
+                saveas(hf,dataSvName);
+            end
+        end
+	end
+
+	varargout{1} = [];
 end

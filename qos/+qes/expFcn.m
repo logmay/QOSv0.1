@@ -44,7 +44,7 @@ classdef expFcn
                 if ~isa(MeasurementObj{nn},'qes.measurement.measurement')
                     throw(MException('QOS_expFcn:InvalidInput','at least one of the MeasurementObj is not a Measurement class objects.'));
                 end
-                if ~MeasurementObj{nn}.numericscalardata
+                if ~MeasurementObj{nn}.numericscalardata && isempty(MeasurementObj{nn}.datafcn)
                     throw(MException('QOS_expFcn:InvalidInput','only handles MeasurementObj that produces numeric scalar data.'));
                 end
             end

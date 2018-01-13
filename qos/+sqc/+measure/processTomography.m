@@ -51,7 +51,7 @@ classdef processTomography < qes.measurement.measurement
 			obj.statePrepGates = cell(1,numTomoQs);
 			for ii = 1:numTomoQs
 				% gates that prepares the qubit onto states: {|0>, |1>, |0>+|1>, |0>+i|1>}
-				obj.statePrepGates{numTomoQs-ii+1} = {I(obj.qubits{ii}),...
+                obj.statePrepGates{numTomoQs-ii+1} = {I(obj.qubits{ii}),...
 										X(obj.qubits{ii}),...
 										Y2p(obj.qubits{ii}),...
 										X2m(obj.qubits{ii}),...
@@ -63,27 +63,6 @@ classdef processTomography < qes.measurement.measurement
 % 										};
             end
 			obj.stateTomoObj = sqc.measure.stateTomography(qubits);
-            
-            %% deals with cz gate phase offset, will be handled differently in a future version
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            if strcmp(class(obj.process),'CZ')
-                obj.stateTomoObj.xyGatePhaseOffset = fliplr(obj.process.dynamicPhase);
-            else
-%                 obj.stateTomoObj.xyGatePhaseOffset = 3*[1.37735, -1.930];
-            end
-            % temp
-%             % q9 - q8 one cz 
-%             obj.stateTomoObj.xyGatePhaseOffset = [1.2579, -1.907];
-%             % q9 - q8 2 cz 
-%             obj.stateTomoObj.xyGatePhaseOffset = [2.743867, -3.44946];
-%             % q9 - q8 3 cz 
-%             obj.stateTomoObj.xyGatePhaseOffset = [4.22984,  -4.99199];
-%             % q9 - q8 4 cz 
-%             obj.stateTomoObj.xyGatePhaseOffset = [5.715813,  -6.534512];
-%             
-%             obj.numericscalardata = false;
         end
         function Run(obj)
             Run@qes.measurement.measurement(obj);
@@ -99,11 +78,7 @@ classdef processTomography < qes.measurement.measurement
 						sprintf('Process tomography: %0.0f of %0.0f | ',idx,numShots);
 				end
 				pGates = lpr();
-                
-%                 if idx == 6
-%                     kkk = 1;
-%                 end
-                
+
 				if isempty(pGates)
 					break;
 				end

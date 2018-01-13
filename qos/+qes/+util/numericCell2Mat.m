@@ -12,7 +12,7 @@ function data = numericCell2Mat(data)
     end
     allNumeric = true;
     for ii = 1:numel(data)
-        if ~isnumeric(data{ii})
+        if ~isnumeric(data{ii}) || isempty(data{ii})
             allNumeric = false;
             break;
         end

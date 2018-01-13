@@ -38,7 +38,7 @@ data_taking.public.s21_scan_networkAnalyzer(... % 'NAName' can be ommitted if th
       'notes','attenuation:30dB','gui',true,'save',true);
 end
 %% s21 vs qubit dc bias with network analyzer
-for qubitIndex = 1:9
+for qubitIndex = 1:1
 s21_zdc_networkAnalyzer('qubit',qNames{qubitIndex},...% 'NAName' can be ommitted if there is only one network analyzer
       'startFreq',readoutFreqs(qubitIndex)-0.1e6,'stopFreq',readoutFreqs(qubitIndex)+1e6,...
       'numFreqPts',51,'avgcounts',20,'NApower',-10,...
@@ -46,16 +46,12 @@ s21_zdc_networkAnalyzer('qubit',qNames{qubitIndex},...% 'NAName' can be ommitted
       'gui',true,'save',true);
 end
 %% s21 with DAC, a coarse scan to find all the qubit readoutFreqs
-amp = 2.5e3; % logspace(log10(1000),log10(32768),20);
-freq = 6.7615e9-2e6:0.1e6:6.7615e9+2e6;
-s21_rAmp('qubit','q5','freq',freq,'amp',amp,...
-      'notes','attenuation:20dB','gui',true,'save',true);
+s21_rAmp('qubit','q1','freq',[6.78065e9-3e6:0.02e6:6.78065e9+3e6],'amp',6000,...
+      'notes','','gui',true,'save',true);
 %% finds all qubit readoutFreqs automatically by fine s21 scan, session/public/autoConfig.readoutResonators.* has to be properly set for it to work
 [readoutFreqs, pkWithd] = auto.qubitreadoutFreqs();
 % after this you need to order readoutFreqs in accordance with qNames
 % the upadate the readoutFreqs value to r_fr in registry for each qubit:
-%% if all readoutFreqs are found correctly, save them to r_fr and r_freq in registry for each qubit:
-readoutFreqs = [6.5922000,6.6331600,6.6773200,6.7239600,6.761480,6.798480,6.839720,6.881200,6.9242400]*1e9;
 %%
 for ii = 1:numel(qNames)
     % r_fr, the qubit dip frequency, it's exact value changes with qubit state and readout power,
@@ -68,23 +64,36 @@ for ii = 1:numel(qNames)
     setQSettings('r_freq',readoutFreqs(ii),qNames{ii});
 end
 %%  s21 vs power with DAC to finds the dispersive shift
-amp = logspace(log10(1000),log10(32768),20);
-amp = 2.5e3;
+q = 'q3';
+setQSettings('r_avg',500);
+amp = logspace(log10(1000),log10(30000),25);
+% amp = getQSettings('r_amp',q);
 rfreq = getQSettings('r_freq',q);
-freq = rfreq-1.5e6:0.1e6:rfreq+1e6;
-s21_rAmp('qubit',qNames{8},'freq',freq,'amp',amp,...
+freq = rfreq-0.7e6:0.1e6:rfreq+0.5e6;
+s21_rAmp('qubit',q,'freq',freq,'amp',amp,...
       'notes','','gui',true,'save',true);
 %%
-s21_zdc('qubit', qNames{4},...
-      'freq',[6.7986e9-1.5e6:0.1e6:6.7986+1e6],'amp',[-3e4:1.5e3:3e4],...
+q = 'q11';
+rfreq = getQSettings('r_freq',q);
+freq = rfreq-0.7e6:0.1e6:rfreq+0.3e6;
+s21_zdc('qubit', q,...
+      'freq',freq,'amp',[-3e4:3e3:3e4],...
       'gui',true,'save',true);
 %%
 s21_zpa('qubit', 'q4',...
       'freq',[readoutFreqs(4)-2.2e6:0.15e6:readoutFreqs(4)+1e6],'amp',[-3e4:2e3:3e4],...
-      'gui',true,'save',true);
+      'gui',true,'save',true);  
+%% to find all the peaks
+    % export data with DataViewer
+    yinDB = 20*log10(abs(y)/max(abs(y)));
+    [pks,locs,w,p] = findpeaks(-yDB,x,'SortStr','none','NPeaks',12,...
+        'MinPeakDistance',15e6,...
+        'MinPeakHeight',4,...
+        'WidthReference','halfheight');
+    figure();plot(x/1e9,yDB);hold on;plot(locs/1e9,-pks,'*');
 %%
 s21_01('qubit',q,'freq',[],'notes','','gui',true,'save',true);
 %% hint: you can use this to measure IQ stability over a long duration of time
-IQvsReadoutDelay('qubit','q9','delay',[0:1:32],...
+IQvsReadoutDelay('qubit','q1','delay',[36*ones(1,500)],...
     'notes','','gui',true,'save',true);
 

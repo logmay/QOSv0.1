@@ -91,10 +91,11 @@ classdef USTCDAC < handle
                throw(MException('USTCDAC:OpenError',...
                    sprintf('Open DAC %s failed!',obj.name))); % Yulin Wu
             end
-             obj.Init();
+            obj.Init();
         end
          
         function Init(obj)
+            obj.SetTimeOut(10);% add by guocheng @20180107
             obj.SetIsMaster(obj.ismaster);
             obj.SetTrigSel(obj.trig_sel);
             obj.SetTrigInterval(obj.trig_interval);
@@ -110,10 +111,10 @@ classdef USTCDAC < handle
             try_count = 10;
             isDACReady = 0;
             
-            obj.InitBoard();
-            ret = obj.GetReturn(1);
-            data = double(ret(2))*65536 + double(ret(1));
-            qes.hwdriver.sync.ustcadda_backend.WriteLog(obj.ip,data);
+%             obj.InitBoard();
+%             ret = obj.GetReturn(1);
+%             data = double(ret(2))*65536 + double(ret(1));
+%             qes.hwdriver.sync.ustcadda_backend.WriteLog(obj.ip,data);
             
             while(try_count > 0 && ~isDACReady)
                 obj.isblock = 1;
@@ -137,12 +138,14 @@ classdef USTCDAC < handle
                 else
                     isDACReady = 0;
                     obj.InitBoard();
-                    try_count =  try_count - 1;
+                    
                     pause(0.1);
                 end
+                try_count =  try_count - 1;
             end
             
             if(isDACReady == 0)
+                disp(obj.ip);
                 error('USTCDAC:InitError','Config DAC failed!');
             end
 
@@ -469,6 +472,7 @@ classdef USTCDAC < handle
            obj.AutoOpen()
            [ret,isSuccessed] = calllib(obj.driver,'CheckSuccessed',uint32(obj.id),0);
            if(ret == -1)
+               disp(obj.ip);
                error('USTCDAC:CheckStatus','Exist some task failed!');
            end
         end
@@ -516,6 +520,15 @@ classdef USTCDAC < handle
         function SetTrigDelay(obj,num)
             obj.SetTrigStart(floor((obj.trig_delay+ num)/8)+1);
             obj.SetTrigStop(floor((obj.trig_delay+ num)/8)+ 10);
+        end
+        
+        %modified at 20180107 by guocheng
+        function SetTimeOut(obj,time)
+            ret = calllib(obj.driver,'SetTimeOut',obj.id,uint32(0),time);
+            ret = ret + calllib(obj.driver,'SetTimeOut',obj.id,uint32(1),time);
+            if(ret ~= 0)
+               error('USTCDAC:SetTimeOut','Set timeout failed!');
+            end
         end
         
         % removed by Yulin Wu, 170427

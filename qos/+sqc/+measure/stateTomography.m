@@ -12,9 +12,12 @@ classdef stateTomography < sqc.measure.tomography
 % mail4ywu@gmail.com/mail4ywu@icloud.com
 
     methods
-        function obj = stateTomography(qubits)
+        function obj = stateTomography(qubits, isParallel)
+			if nargin < 2
+				isParallel = false;
+			end
             % X, Y, Z
-            obj = obj@sqc.measure.tomography(qubits,{'Y2p','X2m','I'}); 
+            obj = obj@sqc.measure.tomography(qubits,{'Y2p','X2m','I'},isParallel); 
             % obj = obj@sqc.measure.tomography(qubits,{'Y2m','X2p','I'}); 
         end
         function Run(obj)

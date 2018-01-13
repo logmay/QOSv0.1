@@ -100,9 +100,9 @@ function varargout = xyGateAmpTuner(varargin)
         if args.AENumPi <= 11
             amps_ae = linspace(0.9*gateAmp,min(daChnl.vpp,1.1*gateAmp),NUM_RABI_SAMPLING_PTS*2);
         elseif args.AENumPi <= 25
-            amps_ae = linspace(0.95*gateAmp,min(daChnl.vpp,1.05*gateAmp),NUM_RABI_SAMPLING_PTS*3);
+            amps_ae = linspace(0.95*gateAmp,min(daChnl.vpp,1.05*gateAmp),NUM_RABI_SAMPLING_PTS*2);
         else
-            amps_ae = linspace(0.975*gateAmp,min(daChnl.vpp,1.025*gateAmp),NUM_RABI_SAMPLING_PTS*3);
+            amps_ae = linspace(0.975*gateAmp,min(daChnl.vpp,1.025*gateAmp),NUM_RABI_SAMPLING_PTS*2);
         end
 %         switch args.gateTyp
 %             case {'X','Y'}
@@ -158,13 +158,11 @@ function varargout = xyGateAmpTuner(varargin)
 		xlabel(ax,'xy drive amplitude');
 		ylabel(ax,'P|1>');
         if args.AE
-            legend(ax,{'data(1\pi)',...
+            legend(ax,{[sprintf('data(%d',numPi0),'\pi)'],...
                 [sprintf('data(AE:%0.0f',args.AENumPi),'\pi)'],...
                 sprintf('%s gate amplitude',args.gateTyp)});
-            title('Precision: ~0.5%');
         else
-            legend(ax,{'data(1\pi)',sprintf('%s gate amplitude',args.gateTyp)});
-            title('Precision: ~2%');
+            legend(ax,{[sprintf('data(%d',numPi0),'\pi)'],sprintf('%s gate amplitude',args.gateTyp)});
         end
         set(ax,'YLim',ylim);
         drawnow;

@@ -1,4 +1,4 @@
-function data = loadSettings(spath, fields)
+function [data, varargout] = loadSettings(spath, fields, withHis)
 % load settings
 % examples:
 % s = qes.util.loadSettings('F:\program\qes_settings',{'hardware','hwsettings1','ustcadda','ad_boards'})
@@ -8,7 +8,11 @@ function data = loadSettings(spath, fields)
 % Copyright 2016 Yulin Wu, University of Science and Technology of China
 % mail4ywu@gmail.com/mail4ywu@icloud.com
 
+    if nargin < 3
+        withHis = false;
+    end
     data = [];
+    varargout = cell(1,2);
     if nargin == 1 || isempty(fields)
         fields = {};
     end
@@ -28,13 +32,22 @@ function data = loadSettings(spath, fields)
 					sprintf('settings path %s not found.', strrep(spath,'\','\\'))));
     end
     numFields = numel(fields);
-    for ii = 1:numFields
+    ii = 1;
+    while ii <= numFields
         if ~ischar(fields{ii})
             throw(MException('QOS_loadSettings:invalidInput',...
 				sprintf('field name can not be a(n) ''%s'', char string only.', class(fields{ii}))));
-        elseif ~isvarname(fields{ii})
+        end
+        subFields = strsplit(fields{ii},'.');
+        numSubFields = numel(subFields);
+        if numSubFields > 1
+            numFields = numFields + numSubFields-1;
+        end
+        fields = [fields(1:ii-1), subFields, fields(ii+1:end)];
+        if ~isvarname(fields{ii})
             throw(MException('QOS_loadSettings:invalidInput',sprintf('invalid field name ''%s''', fields{ii})));
         end
+        ii = ii +1;
     end
     fileinfo = dir(spath);
     numFiles = numel(fileinfo);
@@ -99,8 +112,11 @@ function data = loadSettings(spath, fields)
                             end
                         end
                         if isfield(data,fieldname)
-                            throw(MException('QOS_loadSettings:duplicateSettingsEntry',...
-                                'duplicate settings entry ''%s'' found in settings path %s', fieldname, strrep(spath,'\','\\')));
+                            duplicateFile = fullfile(spath,fileinfo(ii).name);
+                            delete(duplicateFile);
+                            warning(['duplicate file : ', duplicateFile, ' deleted.']);
+%                             throw(MException('QOS_loadSettings:duplicateSettingsEntry',...
+%                                 'duplicate settings entry ''%s'' found in settings path %s', fieldname, strrep(spath,'\','\\')));
                         end
                         data.(fieldname) = data_;
                     end
@@ -126,7 +142,8 @@ function data = loadSettings(spath, fields)
             data = struct();
             if fileinfo(ii).isdir && strcmp(fileinfo(ii).name,fields{1})
                 fields(1) = [];
-                data = qes.util.loadSettings(fullfile(spath,fileinfo(ii).name),fields);
+                [data,his_data, his_time] = qes.util.loadSettings(fullfile(spath,fileinfo(ii).name),fields,withHis);
+                varargout = {his_data, his_time};
                 return;
             end
             if fileinfo(ii).isdir || length(fileinfo(ii).name) < 5 || ~strcmp(fileinfo(ii).name(end-2:end),'key')
@@ -138,11 +155,27 @@ function data = loadSettings(spath, fields)
             end
             if strcmp(fileinfo(ii).name(1:end-4),fields{1})
                 jdata = qes.util.loadJson(fullfile(spath,fileinfo(ii).name));
+                hisFile = fullfile(spath,'_history',fileinfo(ii).name(1:end-4));
                 if numFields == 1
                     if isfield(jdata,fields{1})
                         data = jdata.(fields{1});
                     else
                         data = jdata;
+                    end
+                    if withHis
+                        hisFile = [hisFile,'.his'];
+                        if exist(hisFile,'file')
+                            try
+                                fid = fopen(hisFile,'r');
+                                fdata = textscan(fid,'%s%f');
+                                fclose(fid);
+                                varargout{2} = datenum(fdata{1},'yyyy-mm-dd_HH:MM:SS:FFF');
+                                varargout{1} = cell2mat(fdata(2));
+                                
+                            catch
+                                warning('read data from his file failed');
+                            end
+                        end
                     end
                     return;
                 end
@@ -159,12 +192,27 @@ function data = loadSettings(spath, fields)
                         if iscell(data) && numel(data) == 1
                             data = data{1};
                         end
+                        if withHis
+                            hisFile = [hisFile,'.',fields{jj},'.his'];
+                            if exist(hisFile,'file')
+                                try
+                                    fid = fopen(hisFile,'r');
+                                    fdata = textscan(fid,'%s%f');
+                                    fclose(fid);
+                                    varargout{2} = datenum(fdata{1},'yyyy-mm-dd_HH:MM:SS:FFF');
+                                    varargout{1} = cell2mat(fdata(2));
+                                catch
+                                    warning('read data from his file failed');
+                                end
+                            end
+                        end
                         return;
                     else
                         jdata = jdata.(fields{jj});
                         if iscell(jdata) && numel(jdata) == 1
                             jdata = jdata{1};
                         end
+                        hisFile = [hisFile,'.',fields{jj}];
                     end
                 end
             elseif numFields == 1
@@ -192,6 +240,20 @@ function data = loadSettings(spath, fields)
                             data = cellfun(@str2double,strsplit(dstr,','));
                             if isboolean
                                 data = logical(data);
+                            end
+                            if withHis
+                                hisFile = fullfile(spath,'_history',[fileinfo(ii).name(1:ln_field),'.his']);
+                                if exist(hisFile,'file')
+                                    try
+                                        fid = fopen(hisFile,'r');
+                                        fdata = textscan(fid,'%s%f');
+                                        fclose(fid);
+                                        varargout{2} = datenum(fdata{1},'yyyy-mm-dd_HH:MM:SS:FFF');
+                                        varargout{1} = cell2mat(fdata(2));
+                                    catch
+                                        warning('read data from his file failed');
+                                    end
+                                end
                             end
                             return;
 						case '#' % data

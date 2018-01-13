@@ -16,7 +16,7 @@ function varargout = ustcDAZeroOffser(varargin)
 			'qSettings not created: create the qSettings object, set user and select session first.'));
     end
     
-    awgChnlMap = cell2mat(QS.loadHwSettings({args.awgName,'interface','chnlMap'}));
+    awgChnlMap = QS.loadHwSettings({args.awgName,'interface','chnlMap'});
     backendChnlMap = QS.loadHwSettings({'ustcadda','da_chnl_map'});
     boardIndChnlInd = strsplit(regexprep(backendChnlMap{awgChnlMap(args.chnl)},'\s+',''),',');
     fieldNameList = {'ustcadda',...
@@ -27,11 +27,14 @@ function varargout = ustcDAZeroOffser(varargin)
     numAvg = 1;
     function offsetCorr_ = Run()
         awgObj = qes.qHandle.FindByClassProp('qes.hwdriver.sync.awg','name',args.awgName);
+        awgChnl = awgObj.GetChnl(args.chnl);
         voltMeter = qes.qHandle.FindByClassProp('qes.hwdriver.sync.voltMeter','name',args.voltMeterName);
-        voltMeter.numAvg = numAvg;
-        vM = qes.measurement.dcVoltage(voltMeter);
+        voltMeterChnl = voltMeter.GetChnl(1);
+        voltMeterChnl.numAvg = numAvg;
+        voltMeterChnl.range = 0.1;
+        vm = qes.measurement.dcVoltage(voltMeterChnl);
 
-        Calibrator = qes.measurement.awgZeroCalibrator(awgObj,args.chnl,vM);
+        Calibrator = qes.measurement.awgZeroCalibrator(awgChnl,vm);
         if args.gui
             Calibrator.showProcess = true;
         end
@@ -48,7 +51,7 @@ function varargout = ustcDAZeroOffser(varargin)
     end
     
     da_boards = QS.loadHwSettings({'ustcadda','da_boards'});
-    offsetCorr_old = da_boards{str2double(boardIndChnlInd{1})}.offsetCorr{str2double(boardIndChnlInd{2})};
+    offsetCorr_old = da_boards{str2double(boardIndChnlInd{1})}.offsetCorr(str2double(boardIndChnlInd{2}));
     QS.saveHwSettings(fieldNameList,num2str(offsetCorr_old+offsetCorr,'%0.0f'));
 
     QS.DeleteHw();
@@ -59,11 +62,11 @@ function varargout = ustcDAZeroOffser(varargin)
         offsetCorr_fine = Run();
 
         da_boards = QS.loadHwSettings({'ustcadda','da_boards'});
-        offsetCorr_old = da_boards{str2double(boardIndChnlInd{1})}.offsetCorr{str2double(boardIndChnlInd{2})};
+        offsetCorr_old = da_boards{str2double(boardIndChnlInd{1})}.offsetCorr(str2double(boardIndChnlInd{2}));
         QS.saveHwSettings(fieldNameList,num2str(offsetCorr_old+offsetCorr_fine,'%0.0f'));
 
         offsetCorr = offsetCorr + offsetCorr_fine;
     end
         
-    varargout{1} = offsetCorr;
+    varargout{1} = [];
 end

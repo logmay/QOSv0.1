@@ -12,8 +12,11 @@ function Frequency = GetFreq(obj,chnl)
                 'anritsu_mg3692c'}
             Frequency = str2double(query(obj.interfaceobj,':SOUR:FREQ?'));
             % Power = str2double(query(obj.interfaceobj, ':SOUR:POW?'));
-        case {'sc5511a','simulatedmwsrc'}
+        case {'sc5511a','simulatedmwsrc'} % scxxx: signalcore
 			Frequency = obj.interfaceobj.getFrequency(chnl);
+		case {'sinolink'}
+            fwrite(obj.interfaceobj,'FREQ?');
+            Frequency = str2double(char(fread(obj.interfaceobj,obj.interfaceobj.BytesAvailable)'));
         otherwise
              error('MWSource:QueryError', ['Unsupported instrument: ',TYP]);
     end

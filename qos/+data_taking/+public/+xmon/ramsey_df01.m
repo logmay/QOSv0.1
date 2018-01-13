@@ -1,7 +1,7 @@
 function varargout = ramsey_df01(varargin)
 % ramsey: ramsey oscillation, detune by detuning iq frequency(sideband frequency)
 % 
-% <_o_> = ramsey_df01('qubit',_c&o_,...
+% <_o_> = ramsey_df01('qubit',_c|o_,...
 %       'time',[_i_],'detuning',<[_f_]>,'phaseOffset',<_f_>,...
 %       'dataTyp',<'_c_'>,...   % S21 or P
 %       'notes',<_c_>,'gui',<_b_>,'save',<_b_>)
@@ -10,7 +10,7 @@ function varargout = ramsey_df01(varargin)
 % _c_: char or char string
 % _b_: boolean
 % _o_: object
-% a&b: default type is a, but type b is also acceptable
+% a|b: default type is a, but type b is also acceptable
 % []: can be an array, scalar also acceptable
 % {}: must be a cell array
 % <>: optional, for input arguments, assume the default value if not specified
@@ -29,12 +29,13 @@ function varargout = ramsey_df01(varargin)
     X2 = op.XY2(q,pi/2+args.phaseOffset);
     X2_ = op.XY2(q,-pi/2);
     I = gate.I(q);
-    R = measure.resonatorReadout_ss(q);
- 
+
     switch args.dataTyp
         case 'P'
+            R = measure.resonatorReadout_ss(q);
             R.state = 2;
         case 'S21'
+            R = measure.resonatorReadout_ss(q,false,true);
             R.swapdata = true;
             R.name = 'iq';
             R.datafcn = @(x)mean(abs(x));

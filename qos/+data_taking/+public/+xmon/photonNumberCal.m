@@ -1,7 +1,7 @@
 function varargout = photonNumberCal(varargin)
 % calibrate photon number in readout resonator
 % 
-% <_o_> = photonNumberCal('qubit',_c&o_,...
+% <_o_> = photonNumberCal('qubit',_c|o_,...
 %       'time',[_i_],'detuning',[_f_],...
 %       'r_amp',<_f_>,'r_ln',<_i_>,...
 %       'ring_amp',<_f_>,'ring_w',<_i_>,...
@@ -12,7 +12,7 @@ function varargout = photonNumberCal(varargin)
 % _c_: char or char string
 % _b_: boolean
 % _o_: object
-% a&b: default type is a, but type b is also acceptable
+% a|b: default type is a, but type b is also acceptable
 % []: can be an array, scalar also acceptable
 % {}: must be a cell array
 % <>: optional, for input arguments, assume the default value if not specified

@@ -1,15 +1,17 @@
-function StateTomographyLine(P,Title)
+function StateTomographyLine(P, ax, Title)
     % plots state density matrix
     
 % Copyright 2017 Yulin Wu, USTC
 % mail4ywu@gmail.com/mail4ywu@icloud.com
 
-    if nargin < 2
+    if nargin < 3
         Title = '';
     end
 
-    h = qes.ui.qosFigure('State Tomography',false);
-    ax = axes('parent',h);
+    if nargin < 2
+        h = qes.ui.qosFigure('State tomography',false);
+        ax = axes('parent',h);
+    end
     
     numQs = round(log(size(P,1))/log(3));
     
@@ -43,7 +45,41 @@ function StateTomographyLine(P,Title)
             ylabel('P');
             title(Title);
         otherwise
-            error('more than 2 qubits tomography data not supported.');
+            sz = size(P);
+            nq = log(sz(1))/log(3);
+        % 	if round(nq) ~= nq % not working
+            if abs(round(nq) - nq) > 0.001
+                error('illegal data format: P not a 3^nq row matrix, nq is the number of qubits');
+            end
+        % 	if round(log(sz(2))/log2) ~= nq
+            if abs(round(log(sz(2))/log(2)) - nq) > 0.001
+                error('illegal data format: P not a 2^nq column matrix, nq is the number of qubits');
+            end
+            nq = round(nq);
+            lprX0 = qes.util.looper({'X','Y','I'});
+            lprX = lprX0;
+            for ii = 2:nq
+                lprX = lprX + lprX0;
+            end
+            xlbls = cell(1,3^nq);
+            ii = 0;
+            while 1
+                ii = ii+1;
+                e = lprX();
+                if isempty(e)
+                    break;
+                end
+                xlbls{ii} = cellfun(@horzcat,e);
+            end
+            legendsLbls = cell(1,2^nq);
+            for ii = 0:2^nq-1
+                legendsLbls{ii+1} = ['|',dec2bin(ii,nq),'>'];
+            end
+            plot(ax,P,'-s','LineWidth',1);
+            set(gca,'XLim',[1,3^nq],'YLim',[-0.035,1.05],'XTick',1:3^nq,'XTickLabel',xlbls,'YTick',[0,0.25,0.5,0.75,1]);
+            grid on;
+            legend(legendsLbls);
+            title(['|q_{n},...q_{1}>, ',Title]);
     end
     
 end

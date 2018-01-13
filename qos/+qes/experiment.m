@@ -368,16 +368,17 @@ classdef experiment < qes.qHandle
             if obj.stepsdone == obj.totalsteps % done
                 obj.log.timestamp(end+1) = now;
                 obj.log.event{end+1} = 'measurement done';
-                obj.running = false;  
+                obj.running = false;
                 obj.paused = false;
-                if obj.savedata
-                    obj.SaveData(true);  % during the running process, data is
-                                     % saved every 30 seconds. at the end there might be
-                                     % some new data points not saved, so do a
-                                     % force saving!
-                end
+                
                 obj.UpdateProgress(); % status is set within
                 sound(qes.ui.sounds.notify2);
+            end
+            if obj.savedata
+                obj.SaveData(true);  % during the running process, data is
+                                 % saved every 30 seconds. at the end there might be
+                                 % some new data points not saved, so do a
+                                 % force saving!
             end
             for mObj = obj.measurements
                 mObj{1}.delete();

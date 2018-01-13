@@ -1,8 +1,10 @@
 function varargout = ramsey_dp(varargin)
+% support multi-qubit parallel process
+%
 % ramsey: ramsey oscillation,..
 % detune by changing the second pi/2 pulse tracking frame
 % 
-% <_o_> = ramsey_dp('qubit',_c&o_,...
+% <_o_> = ramsey_dp('qubit',[_c|o_],...
 %       'time',[_i_],'detuning',<[_f_]>,'phaseOffset',<_f_>,...
 %       'dataTyp',<'_c_'>,...   % S21, P or Phase
 %       'notes',<_c_>,'gui',<_b_>,'save',<_b_>)
@@ -11,7 +13,7 @@ function varargout = ramsey_dp(varargin)
 % _c_: char or char string
 % _b_: boolean
 % _o_: object
-% a&b: default type is a, but type b is also acceptable
+% a|b: default type is a, but type b is also acceptable
 % []: can be an array, scalar also acceptable
 % {}: must be a cell array
 % <>: optional, for input arguments, assume the default value if not specified
@@ -26,24 +28,49 @@ function varargout = ramsey_dp(varargin)
 
     args = util.processArgs(varargin,{'phaseOffset',0,'dataTyp','P',...
         'gui',false,'notes','','detuning',0,'save',true});
-    q = data_taking.public.util.getQubits(args,{'qubit'});
+	
+	allQubits = sqc.util.loadQubits();
+	qubits = args.qubit; % qubit not qubits because this function only support one qubit measurement when first written
+	if ~iscell(qubits)
+		qubits = {qubits};
+	end
+	numQs = numel(qubits);
+	X2 = cell(1,numQs);
+	X2_ = cell(1,numQs);
+	I = cell(1,numQs);
+	Z = cell(1,numQs);
+	for ii = 1:numQs
+		if ischar(qubits{ii})
+			qubits{ii} = allQubits{qes.util.find(qubits{ii},allQubits)};
+        end
+        q = qubits{ii};
+		X2{ii} = op.XY2(q,pi/2+args.phaseOffset);
+		X2_{ii} = op.XY2(q,-pi/2);
+		I{ii} = gate.I(q);
+		Z{ii} = op.Z_arbPhase(q,args.phaseOffset);
+	end
+    
+%     I = op.detune(q);
+%     I.df = 3e4;
 
-    X2 = op.XY2(q,pi/2+args.phaseOffset);
-    X2_ = op.XY2(q,-pi/2);
-    I = gate.I(q);
+	if numQs > 1
+		parallelReadout = true;
+	else
+		parallelReadout = false;
+	end
 
     isPhase = false;
     switch args.dataTyp
         case 'P'
-            R = measure.resonatorReadout_ss(q);
+            R = measure.resonatorReadout_ss(qubits);
             R.state = 2;
         case 'S21'
-            R = measure.resonatorReadout_ss(q);
+            R = measure.resonatorReadout_ss(qubits,false,true); 
             R.swapdata = true;
             R.name = 'iq';
             R.datafcn = @(x)mean(abs(x));
         case 'Phase'
-            R = measure.phase(q);
+            R = measure.phase(qubits,parallelReadout);
             isPhase = true;
         otherwise
             throw(MException('QOS_ramsey_dp:unrcognizedDataTyp',...
@@ -57,16 +84,27 @@ function varargout = ramsey_dp(varargin)
 	daSamplingRate = daChnl.samplingRate;
 
     function procFactory(delay)
-        I.ln = delay;
-        phaseOffset = -2*pi*detuning.val*delay/daSamplingRate+args.phaseOffset;
+        phase = 2*pi*detuning.val*delay/daSamplingRate+args.phaseOffset;
         if isPhase
-            proc = X2_*I;
-            R.xyGatePhaseOffset = phaseOffset;
+            Z{1}.phase = phase;
+            I{1}.ln = delay;
+            proc = X2_{1}*I{1}*Z{1};
+			for ii_ = 2:numQs
+                Z{ii_}.phase = phase;
+                I{ii_}.ln = delay;
+				proc = proc.*(X2_{ii_}*I{ii_}*Z{ii_});
+			end
             R.setProcess(proc);
         else
-            proc = X2_*I*X2;
-            X2.phi = phaseOffset;
-            proc.Run();
+            I{1}.ln = delay;
+            X2{1}.phi = -phase;
+			proc = X2_{1}*I{1}*X2{1};
+			for ii_ = 2:numQs
+                I{ii_}.ln = delay;
+				X2{ii_}.phi = -phase;
+				proc = proc.*(X2_{ii_}*I{ii_}*X2{ii_});
+			end
+			proc.Run();
             R.delay = proc.length;
         end
     end

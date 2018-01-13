@@ -65,7 +65,7 @@ function hwobj = hwCreator(s)
                         interfaceobj = gpib(s.interface.vendor, s.interface.boardidx, s.interface.gpibaddr);
                     case 'tcpip'
                         if ~isfield(s.interface,'ip') || ~ischar(s.interface.ip)
-                            error('HardwareCreator:UnrecognizedHaredwareSettings','empty or illegal ip address format in settings ''%s''', s.interface.vendor, s.name);
+                            error('HardwareCreator:UnrecognizedHaredwareSettings','empty or illegal ip address format in settings ''%s''', s.interface.ip, s.name);
                         end
                         if ~isfield(s.interface,'port') || ~isnumeric(s.interface.port)
                             error('HardwareCreator:HaredwareSettingsMissing','empty or illegal port number format in settings ''%s''', s.name);
@@ -121,6 +121,9 @@ function hwobj = hwCreator(s)
     end
     if isfield(s,'interface')
         s = rmfield(s,'interface');
+    end
+    if isfield(s,'drivertype')
+        s = rmfield(s,'drivertype');
     end
     
     fn = fieldnames(s);

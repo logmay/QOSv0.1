@@ -25,12 +25,6 @@ function ExportData(obj)
             PlotFcn = str2func(['qes.util.plotfcn.',obj.availableplotfcns{obj.plotfunc}]);
         end
         [x,y,z] = feval(PlotFcn,data.Data, data.SweepVals,'',data.SwpMainParam,'',ax,true);
-        delete(h);
-        if isfield(data,'Info') % old version data
-            Info = data.Info;
-        else
-            Config = data.Config;
-        end
         if ~isempty(x)
             assignin('base','x',x);
         end
@@ -40,28 +34,37 @@ function ExportData(obj)
         if ~isempty(z)
             assignin('base','z',z);
         end
-        if isfield(data,'Info')
-            assignin('base','info',Info);
-        else
-            assignin('base','info',Config);
-        end
-        if isfield(data,'SwpData')
-            SwpDataExist = false;
-            for ii = 1:length(data.SwpData)
-                if ~isempty(data.SwpData{ii})
-                    SwpDataExist = true;
-                    break;
-                end
-            end
-            if SwpDataExist
-                assignin('base','SwpData',data.SwpData);
-            end
-        end
         msgbox('Data have been exported to base workspace as ''x'',''y''and''z''.','Export data','modal');
     catch
-        msgbox('Unable to extract data, make sure the selected plot function supports the currents data set and has data exportation functionality.','modal');
-        if ishghandle(h)
-            delete(h);
+        assignin('base','Data',data.Data);
+        % msgbox('Unable to extract data, make sure the selected plot function supports the currents data set and has data exportation functionality.','modal');
+    end
+    if isfield(data,'Info') % old version data
+        Info = data.Info;
+    else
+        Config = data.Config;
+    end
+    if isfield(data,'Info')
+        assignin('base','info',Info);
+    else
+        assignin('base','info',Config);
+    end
+    if isfield(data,'SwpData')
+        SwpDataExist = false;
+        for ii = 1:length(data.SwpData)
+            if ~isempty(data.SwpData{ii})
+                SwpDataExist = true;
+                break;
+            end
         end
+        if SwpDataExist
+            assignin('base','SwpData',data.SwpData);
+        end
+    end
+    datafile = obj.datafiles_full{obj.files2show(obj.currentfile)};
+    assignin('base','datafile',datafile);
+    
+    if ishghandle(h)
+         delete(h);
     end
 end

@@ -2,7 +2,7 @@ function varargout = T1_1(varargin)
 % T1_1: T1
 % bias, drive and readout all one qubit
 % 
-% <_o_> = T1_1('qubit',_c&o_,'biasAmp',<[_f_]>,'biasDelay',<_i_>,...
+% <_o_> = T1_1('qubit',_c|o_,'biasAmp',<[_f_]>,'biasDelay',<_i_>,...
 %       'backgroundWithZBias',<_b_>,...
 %       'time',[_i_],'r_avg',<_i_>,...
 %       'notes',<_c_>,'gui',<_b_>,'save',<_b_>)
@@ -11,7 +11,7 @@ function varargout = T1_1(varargin)
 % _c_: char or char string
 % _b_: boolean
 % _o_: object
-% a&b: default type is a, but type b is also acceptable
+% a|b: default type is a, but type b is also acceptable
 % []: can be an array, scalar also acceptable
 % {}: must be a cell array
 % <>: optional, for input arguments, assume the default value if not specified

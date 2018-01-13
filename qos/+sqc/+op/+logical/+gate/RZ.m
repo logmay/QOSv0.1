@@ -6,7 +6,7 @@ classdef RZ < sqc.op.logical.operator
 % mail4ywu@gmail.com/mail4ywu@icloud.com
     methods
         function obj = RZ(theta)
-            obj = obj@sqc.op.logical.operator([exp(1i*theta/2),0;0,exp(-1i*theta/2)]);
+            obj = obj@sqc.op.logical.operator([exp(-1i*theta/2),0;0,exp(1i*theta/2)]);
         end
     end
 end

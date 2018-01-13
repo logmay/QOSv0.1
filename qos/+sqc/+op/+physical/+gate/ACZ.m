@@ -14,96 +14,121 @@ classdef ACZ < sqc.op.physical.operator
         lam3
     end
     properties (SetAccess = private)
-        meetUpLonger % must be private
-        padLn % must be private
-        meetUpDetuneFreq
-        dynamicPhase
-    end
-    properties (SetAccess = private, GetAccess = private)
-        aczQ
-        meetUpQ
+        detuneFreq
+        detuneLonger
+		padLn
     end
     methods
         function obj = ACZ(q1, q2)
             if q1 == q2
                 error('perform two qubit gate ACZ on the same qubit is not possible.');
             end
-			if isempty(q1.aczSettings) && isempty(q1.aczSettings)
-				aczSettingsKey = sprintf('%s_%s',q1.name,q2.name);
-				QS = qes.qSettings.GetInstance();
-				scz = QS.loadSSettings({'shared','g_cz',aczSettingsKey});
-			else
-				if ~isempty(q1.aczSettings)
-					scz = q1.aczSettings;
-				else
-					scz = q1.aczSettings;
-				end
-			end
-
-            obj = obj@sqc.op.physical.operator({q1, q2});
-            obj.amp = scz.amp;
-            obj.thf = scz.thf;
-            obj.thi = scz.thi;
-            obj.lam2 = scz.lam2;
-            obj.lam3 = scz.lam3;
-
-            obj.meetUpLonger = scz.meetUpLonger;
-            obj.padLn = scz.padLn;
-            obj.aczLn = scz.aczLn; % must be after the setting of meetUpLonger and padLn
-            if scz.aczFirstQ
-                obj.aczQ = 1;
-                obj.meetUpQ = 2;
-            else
-                obj.aczQ = 2;
-                obj.meetUpQ = 1;
+            czs = sqc.qobj.aczSettings(sprintf('%s_%s',q1.name,q2.name));
+            ind1 = qes.util.find(czs,q1.aczSettings);
+            if isempty(ind1)
+                ind2 = qes.util.find(czs,q2.aczSettings);
             end
-            obj.dynamicPhase = scz.dynamicPhase;
-%             if ~isempty(scz.dynamicPhase)
-%                 q1.g_XY_phaseOffset = q1.g_XY_phaseOffset + scz.dynamicPhase(1);
-%                 q2.g_XY_phaseOffset = q2.g_XY_phaseOffset + scz.dynamicPhase(2);
-%             end
+            
+            if isempty(ind1) && isempty(ind2)
+				czs.load();
+            else
+				if ~isempty(ind1)
+					czs = q1.aczSettings(ind1);
+				else
+					czs = q1.aczSettings(ind2);
+				end
+            end
+            
+            numQs = numel(czs.qubits);
+            qubits_ = cell(1,numQs);
+            for ii = 1:numQs
+                qubits_{ii} = sqc.util.qName2Obj(czs.qubits{ii});
+            end
+            
+            obj = obj@sqc.op.physical.operator(qubits_);
+            obj.amp = czs.amp;
+            obj.thf = czs.thf;
+            obj.thi = czs.thi;
+            obj.lam2 = czs.lam2;
+            obj.lam3 = czs.lam3;
+            obj.padLn = czs.padLn;
+            
+            obj.phaseShift = czs.dynamicPhases;
+            obj.detuneFreq = czs.detuneFreq;
+            obj.detuneLonger = czs.detuneLonger;
+            
+            obj.aczLn = czs.aczLn; % must be after the setting of meetUpLonger, padLn and detuneLonger
             obj.gateClass = 'CZ';
+            
+            
         end
         function set.aczLn(obj,val)
             obj.aczLn = val;
-            obj.length = val+sum(obj.padLn)+2*obj.meetUpLonger;
+            obj.length = val+sum(obj.padLn)+2*max(obj.detuneLonger);
         end
     end
 	methods (Hidden = true)
         function GenWave(obj)
             aczWv = qes.waveform.acz(obj.aczLn, obj.amp, obj.thf, obj.thi, obj.lam2, obj.lam3);
-            padWv1 = qes.waveform.spacer(obj.padLn(1)+obj.meetUpLonger);
-            padWv2 = qes.waveform.spacer(obj.padLn(2)+obj.meetUpLonger);
+            maxDetuneLonger = max(obj.detuneLonger);
+            padWv1 = qes.waveform.spacer(obj.padLn(1)+maxDetuneLonger);
+            padWv2 = qes.waveform.spacer(obj.padLn(2)+maxDetuneLonger);
             obj.z_wv{1} = [padWv1, aczWv, padWv2];
 
-            acz_q = obj.qubits{obj.aczQ};
-            meetUp_q = obj.qubits{obj.meetUpQ};
             persistent da1
             if isempty(da1)
                 da1 = qes.qHandle.FindByClassProp('qes.hwdriver.hardware',...
-                        'name',acz_q.channels.z_pulse.instru);
+                        'name',obj.qubits{1}.channels.z_pulse.instru);
             end
-            obj.z_daChnl{1} = da1.GetChnl(acz_q.channels.z_pulse.chnl);
+            obj.z_daChnl{1} = da1.GetChnl(obj.qubits{1}.channels.z_pulse.chnl);
 			
-            persistent da2
-            if obj.meetUpDetuneFreq % currently meetUpDetuneFreq is the pulse amplitude
-                wvArgs = {obj.aczLn+2*obj.meetUpLonger,...
-                    sqc.util.detune2zpa(meetUp_q,obj.meetUpDetuneFreq)};
-                wvSettings = struct(meetUp_q.g_detune_wvSettings); % use struct() so we won't fail in case of empty
-                fnames = fieldnames(wvSettings);
-                for ii = 1:numel(fnames)
-                    wvArgs{end+1} = wvSettings.(fnames{ii});
-                end
-                meetupWv = feval(['qes.waveform.',meetUp_q.g_detune_wvTyp],wvArgs{:});
+%             persistent da2
+%             if obj.meetUpDetuneFreq ~= 0
+%                 wvArgs = {obj.aczLn+2*obj.meetUpLonger,...
+%                     sqc.util.detune2zpa(meetUp_q,obj.meetUpDetuneFreq)};
+%                 wvSettings = struct(meetUp_q.g_detune_wvSettings); % use struct() so we won't fail in case of empty
+%                 fnames = fieldnames(wvSettings);
+%                 for ii = 1:numel(fnames)
+%                     wvArgs{end+1} = wvSettings.(fnames{ii});
+%                 end
+%                 meetupWv = feval(['qes.waveform.',meetUp_q.g_detune_wvTyp],wvArgs{:});
+%                 
+% %                 meetupWv = qes.waveform.rect(obj.aczLn+2*obj.meetUpLonger,...
+% %                     sqc.util.detune2zpa(meetUp_q,obj.meetUpDetuneFreq));
+% 
+%                 padWv3 = qes.waveform.spacer(obj.padLn(1)+obj.detuneLonger);
+%                 padWv4 = qes.waveform.spacer(obj.padLn(2)+obj.detuneLonger);
+%                 
+%                 obj.z_wv{2} = [padWv3,meetupWv,padWv4];
+%                 if isempty(da2)
+%                     da2 = qes.qHandle.FindByClassProp('qes.hwdriver.hardware',...
+%                             'name',meetUp_q.channels.z_pulse.instru);
+%                 end
+%                 obj.z_daChnl{2} = da2.GetChnl(meetUp_q.channels.z_pulse.chnl);
+%             end
 
-                padWv3 = qes.waveform.spacer(obj.padLn(1));
-                padWv4 = qes.waveform.spacer(obj.padLn(2));
-                obj.z_wv{2} = [padWv3,meetupWv,padWv4];
-                if isempty(da2)
+            for ii = 2:numel(obj.detuneFreq)+1
+                if obj.detuneFreq(ii-1) ~= 0
+                    wvArgs = {obj.aczLn+2*obj.detuneLonger(ii-1),...
+                        sqc.util.detune2zpa(obj.qubits{ii},obj.detuneFreq(ii-1))};
+                    wvSettings = struct(obj.qubits{ii}.g_detune_wvSettings); % use struct() so we won't fail in case of empty
+                    fnames = fieldnames(wvSettings);
+                    for jj = 1:numel(fnames)
+                        wvArgs{end+1} = wvSettings.(fnames{jj});
+                    end
+                    detuneWv = feval(['qes.waveform.',obj.qubits{ii}.g_detune_wvTyp],wvArgs{:});
+                    
+%                     detuneWv = qes.waveform.rect(obj.aczLn+2*obj.meetUpLonger+2*obj.detuneLonger,...
+%                         sqc.util.detune2zpa(obj.qubits{ii},obj.detuneFreq(ii-2)));
+
+                    padWv3 = qes.waveform.spacer(obj.padLn(1)+maxDetuneLonger-obj.detuneLonger(ii-1));
+                    padWv4 = qes.waveform.spacer(obj.padLn(2)+maxDetuneLonger-obj.detuneLonger(ii-1));
+                    obj.z_wv{ii} = [padWv3,detuneWv,padWv4];
+                    % obj.z_wv{ii} = detuneWv ;
                     da2 = qes.qHandle.FindByClassProp('qes.hwdriver.hardware',...
-                            'name',meetUp_q.channels.z_pulse.instru);
+                                'name',obj.qubits{ii}.channels.z_pulse.instru);
+                    obj.z_daChnl{ii} = da2.GetChnl(obj.qubits{ii}.channels.z_pulse.chnl);
                 end
-                obj.z_daChnl{2} = da2.GetChnl(meetUp_q.channels.z_pulse.chnl);
             end
         end
     end

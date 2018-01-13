@@ -4,7 +4,7 @@ function varargout = resonatorT1(varargin)
 % q1, q2, q3 can be the same qubit or diferent qubits,
 % q1, q2, q3 all has to be the selected qubits in the current session,
 % 
-% <_o_> = resonatorT1('qubit',_c&o_,...
+% <_o_> = resonatorT1('qubit',_c|o_,...
 %       'swpPiAmp',_f_,'biasDelay',biasDelay,'swpPiLn',_i_,...
 %       'backgroundWithZBias',b,...
 %       'time',[_i_],'r_avg',<_i_>,...
@@ -14,7 +14,7 @@ function varargout = resonatorT1(varargin)
 % _c_: char or char string
 % _b_: boolean
 % _o_: object
-% a&b: default type is a, but type b is also acceptable
+% a|b: default type is a, but type b is also acceptable
 % []: can be an array, scalar also acceptable
 % {}: must be a cell array
 % <>: optional, for input arguments, assume the default value if not specified

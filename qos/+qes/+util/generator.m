@@ -41,6 +41,9 @@ classdef generator < handle
 				obj.isDone = true;
 			end
 		end
+		function g = copy(obj)
+			g = qes.util.generator(obj.elements);
+		end
     end
     methods (Access = private)
 		function val = next(obj)

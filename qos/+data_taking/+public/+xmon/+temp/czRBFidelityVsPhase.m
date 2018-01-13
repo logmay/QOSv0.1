@@ -1,10 +1,7 @@
 function varargout = czRBFidelityVsPhase(varargin)
-% spin echo:
-% detune by changing the second pi/2 pulse tracking frame
-% 
 % <_o_> = czRBFidelityVsPhase('controlQ',_c&o_,'targetQ',_c&o_,...
-%       'phase_c',[_f_],'phase_t',[_f_],'czAmp',_f_,...
-%       'numGates',_i_,'numGates',_i_,...
+%       'phase_c',[_f_],'phase_t',[_f_],...
+%       'numGates',_i_,'numReps',_i_,...
 %       'notes',<_c_>,'gui',<_b_>,'save',<_b_>)
 % _f_: float
 % _i_: integer
@@ -30,15 +27,21 @@ function varargout = czRBFidelityVsPhase(varargin)
     aczSettingsKey = sprintf('%s_%s',qc.name,qt.name);
     QS = qes.qSettings.GetInstance();
     scz = QS.loadSSettings({'shared','g_cz',aczSettingsKey});
-    aczSettings = sqc.qobj.aczSettings();
+    aczSettings = sqc.qobj.aczSettings(aczSettingsKey);
     fn = fieldnames(scz);
     for ii = 1:numel(fn)
         aczSettings.(fn{ii}) = scz.(fn{ii});
     end
-    aczSettings.amp = args.czAmp;
     qc.aczSettings = aczSettings;
 
-    R = sqc.measure.randBenchMarking4Opt({qc,qt},args.numGates,args.numReps);
+    % R = sqc.measure.randBenchMarking4Opt({qc,qt},args.numGates,args.numReps);
+    persistent ridx;
+    if isfield(args,'ridx')
+        ridx = args.ridx;
+    elseif isempty(ridx)
+        ridx = sqc.measure.randBenchMarkingFS.CZRndSeq(args.numGates,args.numReps);
+    end
+    R = sqc.measure.randBenchMarkingFS({qc,qt},args.numGates,args.numReps,ridx);
 
     x = qes.expParam(aczSettings,'dynamicPhase(1)');
     x.name = [qc.name,' phase(rad)'];

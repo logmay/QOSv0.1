@@ -14,7 +14,7 @@ classdef mwDrive4Spectrum < sqc.op.physical.operator
             obj = obj@sqc.op.physical.operator(qubit);
             obj.mw_src_power = obj.qubits{1}.qr_xy_uSrcPower;
             obj.amp = obj.qubits{1}.spc_driveAmp;
-			obj.length = obj.qubits{1}.spc_driveLn+2*obj.qubits{1}.spc_zLonger;
+			obj.length = obj.qubits{1}.spc_driveLn;
         end
         function set.ln(obj,val)
             obj.length = val+2*obj.qubits{1}.spc_zLonger;

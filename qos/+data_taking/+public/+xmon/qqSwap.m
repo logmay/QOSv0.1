@@ -3,7 +3,7 @@ function qqSwap(varargin)
 % bias qubit q1 or q2, drive qubit q1 and q2, readout qubit q1 or q2,
 % q1, q2 all has to be the selected qubits in the current session,
 % 
-% <_o_> = qqQSwap('qubit1',_o&c_,'qubit2',_o&c_,...
+% <_o_> = qqQSwap('qubit1',_o|c_,'qubit2',_o|c_,...
 %       'biasQubit',<_i_>,'biasAmp',[_f_],'biasDelay',<_i_>,...
 %       'q1XYGate',_c_,'q2XYGate',_c_,...
 %       'swapTime',[_i_],'readoutQubit',<_i_>,...
@@ -13,7 +13,7 @@ function qqSwap(varargin)
 % _c_: char or char string
 % _b_: boolean
 % _o_: object
-% a&b: default type is a, but type b is also acceptable
+% a|b: default type is a, but type b is also acceptable
 % []: can be an array, scalar also acceptable
 % {}: must be a cell array
 % <>: optional, for input arguments, assume the default value if not specified

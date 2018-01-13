@@ -19,7 +19,7 @@ function [varargout] = InitializeInstr(obj)
                 fprintf(obj.interfaceobj,'LMI1.25E-1');   % set current safety limit to 125mA max
                 obj.safty_limit = 50e-3;
                 obj.numChnls = 1;
-            case {'adcmt6166v','adcmt61661'}  % as voltage source
+            case {'adcmt6166v','adcmt61661v'}  % as voltage source
                 fprintf(obj.interfaceobj,'VF'); % set to voltage source mode
                 fprintf(obj.interfaceobj,'SVRX');   % set to auto range.
                 % fprintf(DCSource,'V5');   % set to range 10V.

@@ -6,7 +6,7 @@ classdef resonatorReadout_mIQ < sqc.measure.resonatorReadout
     
     methods
         function obj = resonatorReadout_mIQ(q)
-            obj = obj@sqc.measure.resonatorReadout(q);
+            obj = obj@sqc.measure.resonatorReadout(q,false,true);
             obj.numericscalardata = true;
             obj.name =  '|IQ|';
         end

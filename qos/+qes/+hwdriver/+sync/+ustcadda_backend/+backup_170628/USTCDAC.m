@@ -98,13 +98,15 @@ classdef USTCDAC < handle
             obj.SetIsMaster(obj.ismaster);
             obj.SetTrigSel(obj.trig_sel);
             obj.SetTrigInterval(obj.trig_interval);
-
             obj.SetTotalCount(obj.trig_interval/4e-9 - 5000); %20170411
 
             obj.SetDACStart(obj.sync_delay/4e-9 + 1);
             obj.SetDACStop(obj.sync_delay/4e-9 + 10);
+			
             obj.SetTrigStart(obj.trig_delay/4e-9 + 1);
             obj.SetTrigStop(obj.trig_delay/4e-9 + 10);
+			
+			%
             obj.SetLoop(1,1,1,1);
             
             try_count = 10;

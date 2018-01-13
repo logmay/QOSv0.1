@@ -11,13 +11,15 @@ function xfrFunc = gaussianExp(bw,r,td)
 rs = 50;
 sigmaf = 2.0840*bw/sqrt(3);
 sigma = 1/(2*pi*sigmaf);
-t = -5*sigma:1/rs:10*td(end);
+assert(all(td>=1));
+t = -5*sigma:1/rs:10*max(td);
 v = zeros(1,length(t));
 for ii = 1:numel(r)
     v = v+r(ii)*exp(-t/td(ii));
 end
 v = v + exp(-t.^2/(2*sigma^2));
-% figure();plot(t,v);
+%figure();
+% plot(t,v);
 
 impr = qes.util.derivative(t,v);
 % figure();plot(t,impr);
@@ -53,12 +55,11 @@ xfrFunc = com.qos.waveform.XfrFuncNumeric(IMPR_f,real(IMPR_fa),imag(IMPR_fa));
 
 % fi = linspace(-0.5,0.5,100);
 % fi = IMPR_f;
-% figure();plot(IMPR_f);hold on; plot(fi);
-% fsamples = xfrFunc.eval(fi);
+% fsamples = xfrFunc.samples_t(fi);
 % fsamples = reshape(fsamples,2,[]);
 % fsamples = fsamples(1,:)+1j*fsamples(2,:);
-
-% figure();plot(IMPR_f(ind),real(IMPR_fa(ind)));
-% hold on;plot(fi, fsamples(1:2:end),'-+r');
+% 
+% figure();plot(fi,real(IMPR_fa));
+% hold on;plot(fi, abs(fsamples()),'-+r');
 
 end

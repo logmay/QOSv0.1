@@ -1,11 +1,11 @@
 function varargout = Tomo_2QProcess(varargin)
-% demonstration of process tomography on single qubit.
+% demonstration of process tomography on 2 qubits.
 % process tomography is a measurement, it is not used alone in real
 % applications, this simple function is just a demonstration/test to show
 % that process tomography is working properly.
 % process options are: 'CZ','CNOT'
 %
-% <_o_> = Tomo_2QProcess('qubit1',_c&o_,'qubit1',_c&o_,...
+% <_o_> = Tomo_2QProcess('qubit1',_c|o_,'qubit1',_c|o_,...
 %       'process',<_c_>,...
 %       'notes',<_c_>,'gui',<_b_>,'save',<_b_>)
 % _f_: float
@@ -13,7 +13,7 @@ function varargout = Tomo_2QProcess(varargin)
 % _c_: char or char string
 % _b_: boolean
 % _o_: object
-% a&b: default type is a, but type b is also acceptable
+% a|b: default type is a, but type b is also acceptable
 % []: can be an array, scalar also acceptable
 % {}: must be a cell array
 % <>: optional, for input arguments, assume the default value if not specified
@@ -42,9 +42,15 @@ function varargout = Tomo_2QProcess(varargin)
                 Y2p = gate.Y2p(q2);
                 p = Y2m*CZ*Y2p; % q1, control qubit, q2, target qubit
             otherwise
-                throw(MException('QOS_singleQProcessTomo:unsupportedGate',...
-                    sprintf('available process options for singleQProcessTomo is %s, %s given.',...
-                    '''CZ'',''CNOT''',args.process)));
+                tokens = strsplit(args.process,',');
+                assert(numel(tokens) == 2);
+                g1 = feval(str2func(['@(q)sqc.op.physical.gate.',tokens{1},'(q)']),q1);
+                g2 = feval(str2func(['@(q)sqc.op.physical.gate.',tokens{2},'(q)']),q2);
+                p = g2.*g1;
+                
+%                 throw(MException('QOS_singleQProcessTomo:unsupportedGate',...
+%                     sprintf('available process options for singleQProcessTomo is %s, %s given.',...
+%                     '''CZ'',''CNOT''',args.process)));
         end
     else
         if ~isa(args.process,'sqc.op.physical.operator')

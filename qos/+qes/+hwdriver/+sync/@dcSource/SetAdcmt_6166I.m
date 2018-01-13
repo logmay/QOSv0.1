@@ -4,6 +4,9 @@ function SetAdcmt_6166I(obj,val)
 % Copyright 2015 Yulin Wu, Institute of Physics, Chinese  Academy of Sciences
 % mail4ywu@gmail.com/mail4ywu@icloud.com
 
+    if abs(val) > obj.max || abs(val) > obj.safty_limit
+        error(sprintf('dc level %0.4e great than maximum or safty limit % 0.4e', val, max(obj.max,obj.safty_limit)));
+    end
     if isempty(obj.tune) || ~obj.tune % round is automatic in ADCMT_6166
         fprintf(obj.interfaceobj,['SOI', num2str(val(1),'%6e')]);
     else % tune to target output value
@@ -18,9 +21,9 @@ function SetAdcmt_6166I(obj,val)
             return;
         end
         temp = CurrentOutput:...
-            sign(val(1)-CurrentOutput)*5e-5:...
+            sign(val(1)-CurrentOutput)*50e-6:...
             val(1);
-        if temp(end) ~= val(1);
+        if temp(end) ~= val(1)
             OutputValue = [temp, val(1)];
         else
             OutputValue = temp;

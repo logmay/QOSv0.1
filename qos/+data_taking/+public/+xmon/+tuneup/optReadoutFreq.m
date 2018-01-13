@@ -27,7 +27,7 @@ function varargout = optReadoutFreq(varargin)
     if q.r_avg < R_AVG_MIN
         q.r_avg = R_AVG_MIN;
     end
-    frequency = q.r_freq-3*q.t_rrDipFWHM_est:q.t_rrDipFWHM_est/20:q.r_freq+3*q.t_rrDipFWHM_est;
+    frequency = q.r_freq-4*q.t_rrDipFWHM_est:q.t_rrDipFWHM_est/20:q.r_freq+4*q.t_rrDipFWHM_est;
     e = s21_01('qubit',q,'freq',frequency);
     data = e.data{1};
     data = data(2:end,:); % 2:end, drop first point to deal with an ad bug, may not be necessary in future versions
@@ -39,10 +39,18 @@ function varargout = optReadoutFreq(varargin)
     [~,minIdx1] = min(abs(data(:,1)));
     [~,minIdx2] = min(abs(data(:,2)));
     numPts = size(data,1);
-    if any(abs([minIdx1,minIdx2] - numPts/2) > numPts/2/5*4)
-        throw(MException('QOS_XmonOptReadoutFreq:inproperSettings',...
-            'inproper r_freq or t_rrDipFWHM_est value, dip(s) out of range.'));
-    end
+%     if any(abs([minIdx1,minIdx2] - numPts/2) > numPts/2/5*4)
+%         if args.gui
+%             hf = qes.ui.qosFigure(sprintf('Opt. Readout Freq. | %s', q.name),true);
+%             ax_ = axes('parent',hf);
+%             plot(ax_,frequency,abs(data(:,1)),'--.r',frequency,abs(data(:,2)),'--.b');legend('|0>','|1>');
+%             xlabel('frequency(Hz)');
+%             ylabel('|IQ|');
+%             title('Error!');
+%         end
+%         throw(MException('QOS_XmonOptReadoutFreq:inproperSettings',...
+%             'inproper r_freq or t_rrDipFWHM_est value, dip(s) out of range.'));
+%     end
 
 %     data(:,1) = smooth(data(:,1),3);
 %     data(:,2) = smooth(data(:,2),3);
@@ -93,6 +101,12 @@ function varargout = optReadoutFreq(varargin)
     if args.save
         QS = qes.qSettings.GetInstance();
         QS.saveSSettings({q.name,'r_freq'},optFreq);
+        if ~isempty(hf) && isvalid(hf)
+            dataSvName = fullfile(QS.loadSSettings('data_path'),...
+                ['optReadoutFreq_',q.name,'_',datestr(now,'yymmddTHHMMSS'),...
+                num2str(ceil(99*rand(1,1)),'%0.0f'),'_.fig']);
+            saveas(hf,dataSvName);
+        end
     end
 	varargout{1} = optFreq;
 end

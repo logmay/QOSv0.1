@@ -217,8 +217,8 @@ classdef blochSphere < handle
             line( [0 0],  [0 0],  [-1.2 1.2], 'Color', 'b', 'LineStyle', '-','parent',obj.ax);
             text(1.4,0,0,'|0>+|1>','parent',obj.ax);
             text(-1.4,0,0,'|0>-|1>','parent',obj.ax);
-            text(0,1.4,0,'|0>+i|1>','parent',obj.ax);
-            text(0,-1.4,0,'|0>-i|1>','parent',obj.ax);
+            text(0,1.4,0,'|0>-i|1>','parent',obj.ax);
+            text(0,-1.4,0,'|0>+i|1>','parent',obj.ax);
             text(0,0,1.4,'|1>','parent',obj.ax);
             text(0,0,-1.4,'|0>','parent',obj.ax);
             angle = linspace( 0, 2*pi, 128);

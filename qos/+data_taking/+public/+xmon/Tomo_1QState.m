@@ -6,7 +6,7 @@ function varargout = Tomo_1QState(varargin)
 % prepares a a state(options are: '|0>', '|1>','|0>+|1>','|0>-|1>','|0>+i|1>','|0>-i|1>')
 % and do state tomography.
 %
-% <_o_> = Tomo_1QState('qubit',_c&o_,...
+% <_o_> = Tomo_1QState('qubit',_c|o_,...
 %       'state',<_c_>,...
 %       'notes',<_c_>,'gui',<_b_>,'save',<_b_>)
 % _f_: float
@@ -14,7 +14,7 @@ function varargout = Tomo_1QState(varargin)
 % _c_: char or char string
 % _b_: boolean
 % _o_: object
-% a&b: default type is a, but type b is also acceptable
+% a|b: default type is a, but type b is also acceptable
 % []: can be an array, scalar also acceptable
 % {}: must be a cell array
 % <>: optional, for input arguments, assume the default value if not specified
@@ -52,8 +52,10 @@ function varargout = Tomo_1QState(varargin)
     R.setProcess(p);
     P = R();
 
-    if ~args.gui
-        
+    if args.gui
+        hf = qes.ui.qosFigure(sprintf('State tomography' ),true);
+        ax = axes('parent',hf);
+        qes.util.plotfcn.StateTomographyLine(P,ax,sprintf('1Q State tomography | %s', args.state));
     end
     if args.save
         QS = qes.qSettings.GetInstance();
@@ -62,6 +64,9 @@ function varargout = Tomo_1QState(varargin)
         sessionSettings = QS.loadSSettings;
         hwSettings = QS.loadHwSettings;
         save(fullfile(dataPath,dataFileName),'P','args','sessionSettings','hwSettings');
+        if args.gui && isgraphics(hf)
+            saveas(hf,fullfile(dataPath,[dataFileName,'.fig']));
+        end
     end
     varargout{1} = P;
 end

@@ -12,7 +12,7 @@ classdef ustcadda_v1 < qes.hwdriver.icinterface_compatible % extends icinterface
 	
 	% to future version, these properties must be a channel properties, Yulin Wu
 	properties (SetAccess = private, GetAccess = private)
-		adRecordLength = 1
+		adRecordLength = 1000;
 		adRange
         adDelayStep % unit: DA sampling points
 	end
@@ -259,11 +259,11 @@ classdef ustcadda_v1 < qes.hwdriver.icinterface_compatible % extends icinterface
                 if da_index < 0
                     throw(MException('QOS_ustcadda:badSettings',...
                         sprintf('invalid settings found in da_chnl_map{%0.0f}: DA board index can not be an negative number.',...
-                        ii, da_index)));
+                        k, da_index)));
                 elseif da_index > numDAs
                     throw(MException('QOS_ustcadda:badSettings',...
                         sprintf('da_chnl_map{%0.0f} points to DA board #%0.0f while only %0.0f DA boards exist.',...
-                        ii, da_index, numDAs)));
+                        k, da_index, numDAs)));
                 end
                 if ch > obj.da_list(da_index).da.channel_amount
 					throw(MException('QOS_ustcadda:badSettings',...
@@ -378,6 +378,7 @@ classdef ustcadda_v1 < qes.hwdriver.icinterface_compatible % extends icinterface
                 isSuccessed = obj.da_list(k).da.CheckStatus();
 %                 toc
                 if(isSuccessed ~= 1)
+                    disp(obj.da_list(k).da.name);
                     error('ustcadda_v1:Run','There were some task failed!');
                 end
             end

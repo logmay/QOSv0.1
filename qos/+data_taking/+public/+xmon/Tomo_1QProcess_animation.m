@@ -6,7 +6,7 @@ function varargout = Tomo_1QProcess_animation(varargin)
 % prepares a a state(options are: '|0>', '|1>','|0>+|1>','|0>-|1>','|0>+i|1>','|0>-i|1>')
 % and do state tomography.
 %
-% <_o_> = Tomo_1QProcess_animation('qubit',_c&o_,...
+% <_o_> = Tomo_1QProcess_animation('qubit',_c|o_,...
 %       'process',<_c_>,'numPts',_i_,...
 %       'notes',<_c_>,'gui',<_b_>,'save',<_b_>)
 % _f_: float
@@ -14,7 +14,7 @@ function varargout = Tomo_1QProcess_animation(varargin)
 % _c_: char or char string
 % _b_: boolean
 % _o_: object
-% a&b: default type is a, but type b is also acceptable
+% a|b: default type is a, but type b is also acceptable
 % []: can be an array, scalar also acceptable
 % {}: must be a cell array
 % <>: optional, for input arguments, assume the default value if not specified
@@ -26,7 +26,7 @@ function varargout = Tomo_1QProcess_animation(varargin)
     import sqc.*
     import sqc.op.physical.*
 
-    args = util.processArgs(varargin,{'state','|0>','notes','','save',true});
+    args = util.processArgs(varargin,{'notes','','save',true});
     q = data_taking.public.util.getQubits(args,{'qubit'});
 
     R = measure.stateTomography(q);
@@ -71,7 +71,7 @@ function varargout = Tomo_1QProcess_animation(varargin)
     blochSphere.showToolbar = true;
 %     blochSphere.historyMarkerSize = 6;
     blochSphere.historyMarker = 'o';
-    if strcmp(args.state,'H')
+    if strcmp(args.process,'H')
         args.numPts = 4*ceil(args.numPts/4);
         Y4p = gate.Y4p(q);
         amps1 = linspace(0,Y4p.amp,args.numPts/4);
@@ -97,7 +97,7 @@ function varargout = Tomo_1QProcess_animation(varargin)
         if isXhPi
             p.amp = amps(ii);
             R.setProcess(p*p);
-        elseif strcmp(args.state,'H')
+        elseif strcmp(args.process,'H')
             if ii <= args.numPts/4
             	Y4m.amp = amps1(ii);
             elseif ii <= 3*args.numPts/4
@@ -121,7 +121,7 @@ function varargout = Tomo_1QProcess_animation(varargin)
         end
         P = R();
         % data(:,ii) = P*[-1;1]; % {'Y2m','X2p','I'}
-        data(:,ii) = P*[1;-1]; % {'Y2p','X2m','I'}, |0> state on +z direction 
+        data(:,ii) = P*[-1;1]; % {'Y2p','X2m','I'}, |0> state on +z direction 
         blochSphere.addStateXYZ(data(1,ii),data(2,ii),data(3,ii),1,true);
         drawnow();
     end

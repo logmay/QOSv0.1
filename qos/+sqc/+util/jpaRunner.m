@@ -54,19 +54,25 @@ classdef jpaRunner < qes.qHandle
             if isempty(obj.pumpWv) || refresh
                 obj.GenWave();
             end
+
+            % obj.pumpWv.SendWave();
 			
-			
-            obj.pumpWv.SendWave();
-			
-			obj.pumpWv.hw_delay = true; % important
+			% obj.pumpWv.hw_delay = true; % important
             % syncDelay_pump is added as a small calibration to compensate hardware imperfection while startDelay is a logical delay.
 			outputDelay = obj.jpa.startDelay+obj.jpa.syncDelay_pump;
             outputDelay(outputDelay<0) = 0;
+            
+            DASequence = qes.waveform.DASequence(obj.pumpDAChnl{1,1}.chnl,obj.pumpWv);
+            DASequence.outputDelayByHardware = true;
+			DASequence.outputDelay = outputDelay;
+            
+            obj.pumpDAChnl{1,1}.SendWave(DASequence,true);
+            obj.pumpDAChnl{2,1}.SendWave(DASequence,true); % important: true not false! the Q waveform data is all zeros in case zero frquency mixing
         end
     end
     methods (Access = private)
         function GenWave(obj)
-			wv = qes.waveform.flattop(obj.jpa.opDuration, obj.jpa.pumpAmp,5));
+			wv = qes.waveform.flattop(obj.jpa.opDuration, obj.jpa.pumpAmp,5);
 			wv.carrierFrequency = 0; % no frequency mixing to achieve strong pumping power
 			obj.pumpWv = qes.waveform.sequence(wv);
         end

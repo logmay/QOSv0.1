@@ -6,7 +6,7 @@ classdef cos < qes.waveform.waveform
 % mail4ywu@gmail.com/mail4ywu@icloud.com
 
     methods
-        function obj = gaussian(length,amplitude) 
+        function obj = cos(length,amplitude) 
 			obj.jWaveform = com.qos.waveform.Cos(length,amplitude);
         end
     end

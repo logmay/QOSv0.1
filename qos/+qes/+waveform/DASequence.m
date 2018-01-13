@@ -38,10 +38,10 @@ classdef (Sealed = true) DASequence < handle % matlab.mixin.Copyable
 		end
 		%
 		function set.xfrFunc(obj,val)
-			obj.jDASequence.xfrFunc=val;
+			obj.jDASequence.setXfrFunc(val);
 		end
 		function val = get.xfrFunc(obj)
-			val = obj.jDASequence.xfrFunc;
+			val = obj.jDASequence.getXfrFunc();
         end
         %
 		function set.padLength(obj,val)

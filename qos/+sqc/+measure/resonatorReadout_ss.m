@@ -8,10 +8,29 @@ classdef resonatorReadout_ss < sqc.measure.resonatorReadout
         state = 1 % 1 to 2^num_qubits
     end
     methods
-        function obj = resonatorReadout_ss(q)
-            obj = obj@sqc.measure.resonatorReadout(q);
-            obj.numericscalardata = true;
+        function obj = resonatorReadout_ss(qubits, isParallel,iqAsExtraData)
+			if ischar(qubits)
+				qubits = {qubits};
+			end
+			if nargin < 2
+				if numel(qubits) > 1
+					isParallel = true;
+				else
+					isParallel = false;
+                end
+                iqAsExtraData = true;
+            elseif nargin < 3
+                iqAsExtraData = true;
+			elseif numel(qubits) > 1 && ~isParallel
+				error('illegal arguments');
+			end
+            obj = obj@sqc.measure.resonatorReadout(qubits,isParallel,iqAsExtraData);
             obj.name = ['P',obj.stateNames{obj.state}];
+			if isParallel
+				obj.numericscalardata = false;
+			else
+				obj.numericscalardata = true;
+			end
         end
         function set.state(obj,val)
 			val = round(val);
@@ -24,7 +43,7 @@ classdef resonatorReadout_ss < sqc.measure.resonatorReadout
         end
         function Run(obj)
 			Run@sqc.measure.resonatorReadout(obj);
-            obj.data = obj.data(obj.state);
+            obj.data = obj.data(:,obj.state);
         end
     end
 end

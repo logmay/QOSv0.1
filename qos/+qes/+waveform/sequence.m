@@ -19,6 +19,9 @@ classdef (Sealed = true) sequence < handle & matlab.mixin.Copyable
 		function val = get.length(obj)
             val = obj.jSequence.getLength();
         end
+        function shiftPhase(obj,phase)
+            obj.jSequence.shiftPhase(phase);
+        end
     end
 	methods (Access = protected)
 		function newobj = copyElement(obj)
@@ -39,13 +42,11 @@ classdef (Sealed = true) sequence < handle & matlab.mixin.Copyable
                     'a sequence can only be multiplied with an numeric scalar.'));
             end
         end
-        function obj = plus(obj1,obj2)
-            obj = obj1.copy();
+        function obj = plus(obj,obj2)
 			obj.jSequence.add(obj2.jSequence);
 		end
-		function obj = minus(obj1,obj2)
+		function obj = minus(obj,obj2)
             obj2.jSequence.scale(-1);
-            obj = obj1.copy();
 			obj.jSequence.add(obj2.jSequence);
 		end
 		function obj = uminus(obj)
@@ -55,6 +56,13 @@ classdef (Sealed = true) sequence < handle & matlab.mixin.Copyable
 			obj = horzcat(varargin);
         end
 		function obj = horzcat(varargin)
+            
+            if isempty(varargin{1})
+                varargin(1) = [];
+            end
+            if isempty(varargin{end})
+                varargin(end) = [];
+            end
             numWv = numel(varargin);
 			obj = varargin{1};
             % no copying here for efficiency as copying is only needed

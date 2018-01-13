@@ -1,0 +1,10 @@
+
+circuit={'S','X','X2m','X2p','Z';...
+        'H','CZ','CZ','I','I';...
+        'X2m','Y2p','I','CZ','CZ';...
+        };
+    
+qubits = {'q9','q8','q7','q6','q5'};
+
+p = sqc.op.physical.gateParser.parse(qubits,circuit);
+p.Run();

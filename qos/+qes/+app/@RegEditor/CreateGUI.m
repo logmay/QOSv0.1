@@ -161,7 +161,7 @@ function CreateGUI(obj)
             idx = qes.util.find(obj.qs.session,obj.sessionList);
             if isempty(idx) || numel(idx) > 1
                 throw(MException('QOS_RegEditor:CorruptedDatabase',...
-                    sprintf('database corrupted, selected session: %s points is an non existent session.',obj.qs.session)));
+                    sprintf('database corrupted, selected session: %s points to an non existent session.',obj.qs.session)));
             end
             set(obj.guiHandles.SelectSession,'Value',idx,'Enable','on');
         end

@@ -136,11 +136,7 @@ classdef qSettings < handle
             % if field name not given, we have to return a struct with the
             % field name as the struct field name, not just the value,
             % otherwise the user will know what field this value
-            % corresponds to. for example:
-            % if only one qubit exits
-            % s = S.loadSSettings()
-            % will return the qubit data struct of this qubit, but what
-            % qubit(the field name) is it?
+            % corresponds to.
             if fieldNameGiven
                 s = qes.util.loadSettings(obj.root,[{obj.user,obj.session},fields]);
             else
@@ -157,6 +153,21 @@ classdef qSettings < handle
 %                 end
 %             end
             
+        end
+        function [time,data] = loadSSettingsHis(obj,fields)
+            % loads settings in selected session with history data
+            if isempty(obj.user)
+                throw(MException('QOS_qSettings:userNotSet','user not set.'));
+            end
+            if nargin < 2
+                error('not enough arguments');
+            end
+            if ~iscell(fields)
+                fields = {fields};
+            end
+            [current_data,his_data,his_time] = qes.util.loadSettings(obj.root,[{obj.user,obj.session},fields]);
+            time = [his_time; now];
+            data = [his_data; current_data];
         end
         function saveSSettings(obj,field,value)
             % saves settings value of a specific fied in selected session
@@ -176,7 +187,7 @@ classdef qSettings < handle
                 fields = {fields};
             end
             selected_hw_settings_group = qes.util.loadSettings(obj.root,{'hardware','selected'});
-            if isempty(dir(fullfile(obj.root,'hardware',selected_hw_settings_group)));
+            if isempty(dir(fullfile(obj.root,'hardware',selected_hw_settings_group)))
                 throw(MException('QOS_qSettings:settingsNotFound',...
 					sprintf('hardware settings group %s is selected, but no such settings group is found.',...
 					selected_hw_settings_group)));

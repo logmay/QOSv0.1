@@ -22,6 +22,19 @@ function SetPower(obj,val,chnl)
 		case {'sc5511a','simulatedmwsrc'}
 			obj.interfaceobj.setPower(val,chnl);
 			obj.power(chnl) = val;
+		case {'sinolink'}
+            %%%%
+            %%%%  sinolink times out very frequently, as I just using
+            %%%%  it to ouput a fixed frequency and power lo signal here
+            %%%%  I disabled it temporarily, you may need to remove this.
+            %%%% Yulin Wu 17/12/16
+            return;
+            %%%%
+            %%%%
+            
+            fwrite(obj.interfaceobj,['LEVEL ',num2str(val(1),'%0.2f'),' dBm']);
+            obj.power(chnl) = val;
+            pause(0.1);
         otherwise
              error('MWSource:SetError', ['Unsupported instrument: ',TYP]);
     end

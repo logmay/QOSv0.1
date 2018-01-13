@@ -215,9 +215,9 @@ classdef (Sealed = true) expParam < qes.qHandle
             end
             val = val - obj.offset;
         end
-        function SetAuxpara(obj,val) % for functional programming
-            obj.auxpara  = val;
-        end
+        %function SetAuxpara(obj,val) % for functional programming
+        %    obj.auxpara  = val;
+        %end
         function bol = IsValid(obj)
             % check the validity of hanlde properties and the object itself
             if ~isvalid(obj)

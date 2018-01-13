@@ -69,6 +69,18 @@ classdef looper_ < handle
 		end
 	end
 	methods (Hidden = true)
+		function gs = getGenerators(lpr)
+			gs = lpr.generators;
+		end
+		function nl = plus(lpr1,lpr2)
+			gs2 = lpr2.getGenerators();
+			ngs2 = length(gs2);
+			gArray2 = {};
+			for ii = 1:ngs2
+				gArray2{end+1} = gs2{ii}.copy();
+			end
+			nl = qes.util.looper_([lpr1.generators,gArray2]);
+		end
 		function varargout = subsref(obj,S)
 			varargout = cell(1,nargout);
 			switch S(1).type

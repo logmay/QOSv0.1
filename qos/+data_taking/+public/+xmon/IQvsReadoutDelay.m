@@ -1,7 +1,7 @@
 function varargout = IQvsReadoutDelay(varargin)
 % resonator s21 of state |0> and state |1> 
 % 
-% <_o_> = s21_01('qubit',_c&o_,...
+% <_o_> = s21_01('qubit',_c|o_,...
 %       'delay',[_i_],...
 %       'notes',<_c_>,'gui',<_b_>,'save',<_b_>)
 % _f_: float
@@ -9,7 +9,7 @@ function varargout = IQvsReadoutDelay(varargin)
 % _c_: char or char string
 % _b_: boolean
 % _o_: object
-% a&b: default type is a, but type b is also acceptable
+% a|b: default type is a, but type b is also acceptable
 % []: can be an array, scalar also acceptable
 % {}: must be a cell array
 % <>: optional, for input arguments, assume the default value if not specified
@@ -46,16 +46,18 @@ function varargout = IQvsReadoutDelay(varargin)
     e.measurements = R;
     e.showctrlpanel = false;
     e.plotdata = false;
-    e.savedata = false;
+    e.savedata = true;
+    e.datafileprefix = sprintf('IQvsDelay_%s', q.name);
     e.Run();
     e.data{1} = cell2mat(e.data{1});
-    e.datafileprefix = sprintf('IQvsDelay_%s', q.name);
+    
     if args.gui
         ax = axes('Parent',figure('NumberTitle','off','Name','QOS |IQ vs Readout delay '));
         plot(ax, e.data{1}(:,1),'.b');
         hold(ax,'on');
         plot(ax, e.data{1}(:,2),'.r');
         legend(ax,{'|0>', '|1>'});
+        drawnow;
     end
     e.notes = args.notes;
     e.addSettings({'fcn','args'},{fcn_name,args});

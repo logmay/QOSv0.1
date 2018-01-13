@@ -15,8 +15,16 @@ function On = GetOnOff(obj,chnl)
             else
                 On = false;
             end
-		case {'sc5511a','simulatedmwsrc'}
+		case {'sc5511a','simulatedmwsrc'} % signalcore
 			On = obj.interfaceobj.getOnOff(chnl);
+		case {'sinolink'}
+            fwrite(obj.interfaceobj,'LEVEL:STATE?');
+            str = str2double(char(fread(obj.interfaceobj,obj.interfaceobj.BytesAvailable)'));
+            if strcmp(str(1),'1')
+                On = true;
+            else
+                On = false;
+            end
         otherwise
              error('DCSource:GetOnOff', ['Unsupported instrument: ',TYP]);
     end

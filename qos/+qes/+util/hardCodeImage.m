@@ -1,4 +1,4 @@
-function hardCodeImage(imagefile,codefilename,codefilepath,icnsize)
+function hardCodeImage(imagefile,codefilename,codefilepath,icnsize,noBackground)
     % HardCodeImage hard code a image(png, other formats not tested) into a matlab code file
     % imagefile: full path of image file
     % example:
@@ -7,6 +7,9 @@ function hardCodeImage(imagefile,codefilename,codefilepath,icnsize)
 % Copyright 2015 Yulin Wu, Institute of Physics, Chinese  Academy of Sciences
 % mail4ywu@gmail.com/mail4ywu@icloud.com
 
+    if nargin < 5
+        noBackground = false;
+    end
     if ~ischar(codefilename)
         error('codefilename is not a character string.');
     end
@@ -35,6 +38,16 @@ function hardCodeImage(imagefile,codefilename,codefilepath,icnsize)
         im = imresize(im,icnsize,'nearest');
     end
     im  =  im/255;
+    if noBackground
+        sz = size(im);
+        for ii = 1:sz(1)
+            for jj = 1:sz(2)
+                if all(im(ii,jj,:) == 1)
+                    im(ii,jj,:) = nan;
+                end
+            end
+        end
+    end
     fid = fopen(codefilefullname,'w');
     if fid < 0
         error('unable to create the code file on disk.');

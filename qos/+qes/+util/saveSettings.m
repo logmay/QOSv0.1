@@ -1,4 +1,4 @@
-function saveSettings(spath, field,value)
+function saveSettings(spath, field, value)
 % save settings
 % examples:
 % s = qes.util.saveSettings('F:\program\qes_settings',{'yulin','session1','q2','r_delay'},value)
@@ -27,7 +27,7 @@ function saveSettings(spath, field,value)
     settings_exists = false;
     isJson = false;
     while true
-        s = regexp(field{end},'[^\)\}]\.'); % handles case like 'yulin.session1.q2.r_delay' or 'yulin.session1.q2.r_delay.fieldName(3)'
+        s = regexp(field{end},'[^\)\}]\.'); % handles cases like 'yulin.session1.q2.fieldName(2)' or 'yulin.session1.q2.fieldName{3}'
         if numel(s) > 1
             fe = field{end};
             field{end} = fe(1:s(1));
@@ -36,41 +36,11 @@ function saveSettings(spath, field,value)
             break;
         end
     end
-    
-    try
-        for ii = 1:numel(field)
-            if ~isempty(regexp(field{ii},'{\d+}', 'once')) || ~isempty(strfind(field{ii},'.'))
-                isJson = true;
-                break;
-            end
-        end
-        if isJson
-            old_value = [];
-        else
-            old_value = qes.util.loadSettings(spath, field);
-        end
-        settings_exists = true;
-    catch ME
-        if strcmp(ME.identifier,'loadSettings:invalidInput')
-            warning('saveSettings:addNewField','field %s not found, this field will be add into the setttings.', field{1});
-        else
-            rethrow(ME);
-        end
-    end
-    try
-        if strcmp(class(old_value),class(value))
-            sz_o = size(old_value);
-            sz_n = size(value);
-            if length(sz_o) == length(sz_n) && all(sz_o == sz_n) && all(old_value == value) % case of cell is neganected
-                return;
-            end
-        end
-    catch
-    end
+ 
     numFields = numel(field);
     fileinfo = dir(spath);
     numFiles = numel(fileinfo);
-    if ~settings_exists && numFiles == 1 % field not exist, add it
+    if ~settings_exists && numFiles == 1 % todo, if field not exist, add it
         
         return;
     end
@@ -86,13 +56,69 @@ function saveSettings(spath, field,value)
         if fileinfo(ii).isdir || length(fileinfo(ii).name) < 5 || ~strcmp(fileinfo(ii).name(end-2:end),'key')
             continue;
         end
+
         fname = fileinfo(ii).name(1:end-4);
         if length(field{1}) >= length(fname) && strcmp(fname,field{1}(1:length(fname)))
             field_ = {};
+            hisFileName = '';
             for uu = 1:numel(field)
                 field_ = [field_, strsplit(field{uu},'.')];
+                hisFileName = [hisFileName,'.',field{uu}];
             end
+            hisFileName(1) = [];
             qes.util.saveJson(fullfile(spath,fileinfo(ii).name),field_,value);
+            
+            % regist old_value to history
+            try
+                old_value = qes.util.loadSettings(spath, field);
+            catch ME
+                if strcmp(ME.identifier,'loadSettings:invalidInput')
+                    warning('saveSettings:addNewField','field %s not found, this field will be add into the setttings.', field{1});
+                else
+                    rethrow(ME);
+                end
+            end
+            try
+                if strcmp(class(old_value),class(value))
+                    sz_o = size(old_value);
+                    sz_n = size(value);
+                    if length(sz_o) == length(sz_n) && all(sz_o == sz_n) && all(old_value == value) % case of cell is neganected
+                        return;
+                    end
+                end
+            catch
+            end
+        
+            history_dir = fullfile(spath,'_history');
+            if ~exist(history_dir,'dir')
+                mkdir(history_dir);
+            end
+            history_file = fullfile(history_dir,[hisFileName,'.his']);
+            try
+                if ~exist(history_file,'file') ||...
+                        numel(dir(history_file)) > 1 % a folder
+                    fid = fopen(history_file,'w');
+                else
+                    fid = fopen(history_file,'a+');
+                end
+                if ischar(old_value)
+                    fprintf(fid,'%s\t%s\r\n',datestr(now,'yyyy-mm-dd HH:MM:SS:FFF'),old_value);
+                elseif isnumeric(old_value)
+                    if iscolumn(old_value)
+                        old_value = old_value.';
+                    end
+                    if numel(old_value) > 1
+                        fprintf(fid,'%s\t%s\r\n',datestr(now,'yyyy-mm-dd HH:MM:SS:FFF'),num2str(old_value)); 
+                    elseif isreal(old_value)
+                        fprintf(fid,'%s\t%0.5e\r\n',datestr(now,'yyyy-mm-dd HH:MM:SS:FFF'),old_value);
+                    else
+                        fprintf(fid,'%s\t%0.5e%+0.5ej\r\n',datestr(now,'yyyy-mm-dd_HH:MM:SS:FFF'),real(old_value),imag(old_value));
+                    end
+                end
+                fclose(fid);
+            catch
+                warning('log old value to history file failed');
+            end
         elseif numFields == 1
             ln_field = numel(field{1});
             if length(fileinfo(ii).name)-3 >= ln_field &&...
@@ -105,19 +131,43 @@ function saveSettings(spath, field,value)
                         newfilename = [field{1},'@',value,'.key'];
                         movefile(fullfile(spath,fileinfo(ii).name),fullfile(spath,newfilename));
                         % regist old_value to history
+                        try
+                            old_value = qes.util.loadSettings(spath, field);
+                            settings_exists = true;
+                        catch ME
+                            if strcmp(ME.identifier,'loadSettings:invalidInput')
+                                warning('saveSettings:addNewField','field %s not found, this field will be add into the setttings.', field{1});
+                            else
+                                rethrow(ME);
+                            end
+                        end
+                        try
+                            if strcmp(class(old_value),class(value))
+                                sz_o = size(old_value);
+                                sz_n = size(value);
+                                if length(sz_o) == length(sz_n) && all(sz_o == sz_n) && all(old_value == value) % case of cell is neganected
+                                    return;
+                                end
+                            end
+                        catch
+                        end
                         history_dir = fullfile(spath,'_history');
                         if ~exist(history_dir,'dir')
                             mkdir(history_dir);
                         end
                         history_file = fullfile(history_dir,[field{1},'.his']);
-                        if ~exist(history_file,'file') ||...
-                                numel(dir(history_file)) > 1 % a folder
-                            fid = fopen(history_file,'w');
-                        else
-                            fid = fopen(history_file,'a+');
+                        try
+                            if ~exist(history_file,'file') ||...
+                                    numel(dir(history_file)) > 1 % a folder
+                                fid = fopen(history_file,'w');
+                            else
+                                fid = fopen(history_file,'a+');
+                            end
+                            fprintf(fid,'%s\t%s\r\n',datestr(now,'yyyy-mm-dd HH:MM:SS:FFF'),old_value);
+                            fclose(fid);
+                        catch
+                            warning('log old value to history file failed');
                         end
-                        fprintf(fid,'%s\t%s\r\n',datestr(now,'yyyy-mm-dd HH:MM:SS:FFF'),old_value);
-                        fclose(fid);
                         return;
                     case '=' % in case of numeric settings value, we allow the caller to convert the numeric value to a string, this is usefull since
                         % only the caller knows how much number of digits to
@@ -154,20 +204,53 @@ function saveSettings(spath, field,value)
                         catch
                             % pass, in case of setting to the current value
                         end
-                        % regist old_value to history
+                        % log old_value to history
+                        try
+                            old_value = qes.util.loadSettings(spath, field);
+                            settings_exists = true;
+                        catch ME
+                            if strcmp(ME.identifier,'loadSettings:invalidInput')
+                                warning('saveSettings:addNewField','field %s not found, this field will be add into the setttings.', field{1});
+                            else
+                                rethrow(ME);
+                            end
+                        end
+                        try
+                            if strcmp(class(old_value),class(value))
+                                sz_o = size(old_value);
+                                sz_n = size(value);
+                                if length(sz_o) == length(sz_n) && all(sz_o == sz_n) && all(old_value == value) % case of cell is neganected
+                                    return;
+                                end
+                            end
+                        catch
+                        end
                         history_dir = fullfile(spath,'_history');
                         if ~exist(history_dir,'dir')
                             mkdir(history_dir);
                         end
                         history_file = fullfile(history_dir,[field{1},'.his']);
-                        if ~exist(history_file,'file') ||...
-                                numel(dir(history_file)) > 1 % a folder
-                            fid = fopen(history_file,'w');
-                        else
-                            fid = fopen(history_file,'a+');
+                        try
+                            if ~exist(history_file,'file') ||...
+                                    numel(dir(history_file)) > 1 % a folder
+                                fid = fopen(history_file,'w');
+                            else
+                                fid = fopen(history_file,'a+');
+                            end
+                            if iscolumn(old_value)
+                                old_value = old_value.';
+                            end
+                            if numel(old_value) > 1
+                               fprintf(fid,'%s\t%s\r\n',datestr(now,'yyyy-mm-dd HH:MM:SS:FFF'),num2str(old_value)); 
+                            elseif isreal(old_value)
+                                fprintf(fid,'%s\t%0.5e\r\n',datestr(now,'yyyy-mm-dd HH:MM:SS:FFF'),old_value);
+                            else
+                                fprintf(fid,'%s\t%0.5e%+0.5ej\r\n',datestr(now,'yyyy-mm-dd_HH:MM:SS:FFF'),real(old_value),imag(old_value));
+                            end
+                            fclose(fid);
+                        catch
+                            warning('log old value to history file failed');
                         end
-                        fprintf(fid,'%s\t%0.5e\r\n',datestr(now,'yyyy-mm-dd HH:MM:SS:FFF'),old_value);
-                        fclose(fid);
                         return;
                 end
             end

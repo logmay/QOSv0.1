@@ -12,8 +12,11 @@ function Power = GetPower(obj,chnl)
                 'anritsu_mg3692c'}
             % Frequency = str2double(query(obj.interfaceobj,':SOUR:FREQ?'));
             Power = str2double(query(obj.interfaceobj, ':SOUR:POW?'));
-        case {'sc5511a','simulatedmwsrc'}
+        case {'sc5511a','simulatedmwsrc'} % scxxx: signalcore
 			Power = obj.interfaceobj.getPower(chnl);
+		case {'sinolink'}
+            fwrite(obj.interfaceobj,'LEVEL?');
+            Power = str2double(char(fread(obj.interfaceobj,obj.interfaceobj.BytesAvailable)'));
         otherwise
              error('MWSource:QueryError', ['Unsupported instrument: ',TYP]);
     end

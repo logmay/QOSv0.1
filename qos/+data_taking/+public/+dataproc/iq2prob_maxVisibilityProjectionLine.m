@@ -1,4 +1,4 @@
-function [rPoint, ang, threshold, polarity, hf] =...
+function [rPoint, ang, threshold, polarity, hf,axs] =...
 			iq2prob_maxVisibilityProjectionLine(iq_raw_0,iq_raw_1,auto)
 % iq2prob_maxVisibilityProjectionLine: finds the raw iq
 % projection line which produces the maximum state probability visibility
@@ -41,6 +41,7 @@ function [rPoint, ang, threshold, polarity, hf] =...
     nEval = 0;
     nEval4plot = [];
     v4plot = [];
+    count = 0;
     function inv_v = invVisibility(coef)
         c_r = coef(1);
         c_i = coef(2);
@@ -74,39 +75,42 @@ function [rPoint, ang, threshold, polarity, hf] =...
         if ~auto
             x = binEdges(1:end-1)+binSize/2;
             try 
-                plot(ax1,iq_raw_0,'b.');
-                hold(ax1,'on');
-                plot(ax1,iq_raw_1,'r.');
-                XL = get(ax1,'XLim');
-                YL = get(ax1,'YLim');
-                legend(ax1,{'|0>','|1>'},'Location','southeast');
-                pline_points = [c_r+1j*c_i - 5*binSize*nBins*exp(1j*a),c_r+1j*c_i + 5*binSize*nBins*exp(1j*a)];
-                plot(ax1,real(pline_points),imag(pline_points),'--','Color',[0,1,1],'LineWidth',2);
-                set(ax1,'PlotBoxAspectRatio',[1,1,1],'XLim',XL,'YLim',YL,...
-                    'PlotBoxAspectRatio',[1,1,1],...
-                    'DataAspectRatio',[1,1,1],'PlotBoxAspectRatio',[1,1,1]);
-                xlabel(ax1,'I');
-                ylabel(ax1,'Q');
-                title(ax1,['F_{0->0}: ',num2str(F00,'%0.2f'),', F_{1->1}: ',num2str(F11,'%0.2f')],...
-                    'FontWeight','normal','FontSize',11);
-                hold(ax1,'off');
+                if count == 5
+                    plot(ax1,iq_raw_0,'b.','MarkerSize',4);
+                    hold(ax1,'on');
+                    plot(ax1,iq_raw_1,'r.','MarkerSize',4);
+                    XL = get(ax1,'XLim');
+                    YL = get(ax1,'YLim');
+                    legend(ax1,{'|0>','|1>'},'Location','southeast');
+                    pline_points = [c_r+1j*c_i - 5*binSize*nBins*exp(1j*a),c_r+1j*c_i + 5*binSize*nBins*exp(1j*a)];
+                    plot(ax1,real(pline_points),imag(pline_points),'--','Color',[0,1,1],'LineWidth',2);
+                    set(ax1,'PlotBoxAspectRatio',[1,1,1],'XLim',XL,'YLim',YL,...
+                        'PlotBoxAspectRatio',[1,1,1],...
+                        'DataAspectRatio',[1,1,1],'PlotBoxAspectRatio',[1,1,1]);
+                    xlabel(ax1,'I');
+                    ylabel(ax1,'Q');
+                    title(ax1,['F_{0->0}: ',num2str(F00,'%0.2f'),', F_{1->1}: ',num2str(F11,'%0.2f')],...
+                        'FontWeight','normal','FontSize',11);
+                    hold(ax1,'off');
 
-                plot(ax2,x,p0,'b-',x,p1,'r-');
-                hold(ax2,'on');
-                plot(ax2,[threshold,threshold],get(ax2,'YLim'),'--','Color',[0.4,0.4,0.4]);
-                hold(ax2,'off');
-                legend(ax2,{'|0>','|1>'},'Location','southeast');
-                xlabel(ax2,'dashed line in the left plot');
-                ylabel(ax2,'distribution');
-                nEval4plot = [nEval4plot, nEval];
-                v4plot = [v4plot,v];
-                plot(ax3,nEval4plot,v4plot,'-');
-    %             set(ax3,'YLim',[0,1]);
-                xlabel(ax3,'nth evaluation');
-                ylabel(ax3,'visibilty(P_{1->1}-P_{0->1})');
-                drawnow;
-    %             % temp, save for demo;
-    %             saveas(hf,['F:\data\matlab\20161221\zdc2f01\',datestr(now,'mmddHHMMSS'),'.png']);
+                    plot(ax2,x,p0,'b-',x,p1,'r-');
+                    hold(ax2,'on');
+                    plot(ax2,[threshold,threshold],get(ax2,'YLim'),'--','Color',[0.4,0.4,0.4]);
+                    hold(ax2,'off');
+                    legend(ax2,{'|0>','|1>'},'Location','southeast');
+                    xlabel(ax2,'dashed line in the left plot');
+                    ylabel(ax2,'distribution');
+                    nEval4plot = [nEval4plot, nEval];
+                    v4plot = [v4plot,v];
+                    plot(ax3,nEval4plot,v4plot,'-');
+        %             set(ax3,'YLim',[0,1]);
+                    xlabel(ax3,'nth evaluation');
+                    ylabel(ax3,'visibilty(P_{1->1}-P_{0->1})');
+                    drawnow;
+                    
+                    count = 0;
+                end
+                count = count +1;
             catch
                 % we need to go on even if the plot is closed by user
             end
@@ -123,5 +127,8 @@ function [rPoint, ang, threshold, polarity, hf] =...
 
     rPoint = xsol(1)+1j*xsol(2);
     ang = xsol(3);
-
+    axs = [];
+    if ~auto
+        axs = [ax1,ax2,ax3];
+    end
 end

@@ -3,7 +3,7 @@ s = sqc.qs.state([1,1]);
 bs = sqc.util.blochSphere();
 bs.addState(s);
 bs.draw();
-%% to have a dynamic impression
+%% animation
 hf = qes.ui.qosFigure('Bloch Sphere Test',false);
 set(hf,'ToolBar','none','MenuBar','none');
 ax = axes('Parent',hf,'Position',[-0.25,-0.25,1.5,1.5]);

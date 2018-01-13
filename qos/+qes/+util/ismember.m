@@ -5,7 +5,7 @@ function b = ismember(A,B)
 % Copyright 2016 Yulin Wu, USTC
 % mail4ywu@gmail.com/mail4ywu@icloud.com
 
-	assert(~iscell(A)&iscell(B))
+	assert(~iscell(A) & iscell(B))
     b = false;
     if ischar(A)
         for ii  = 1:numel(B)

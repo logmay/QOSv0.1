@@ -1,5 +1,5 @@
 function varargout = acz_ampLength(varargin)
-% <_o_> = acz_ampLength('controlQ',_c&o_,'targetQ',_c&o_,...
+% <_o_> = acz_ampLength('controlQ',_c|o_,'targetQ',_c|o_,...
 %       'czLength',[_i_],'czAmp',[_f_],'cState','0',...
 %       'dataTyp',<_c_>,...  % options: P, or Phase
 %       'notes',<_c_>,'gui',<_b_>,'save',<_b_>)
@@ -8,7 +8,7 @@ function varargout = acz_ampLength(varargin)
 % _c_: char or char string
 % _b_: boolean
 % _o_: object
-% a&b: default type is a, but type b is also acceptable
+% a|b: default type is a, but type b is also acceptable
 % []: can be an array, scalar also acceptable
 % {}: must be a cell array
 % <>: optional, for input arguments, assume the default value if not specified
@@ -78,7 +78,7 @@ function varargout = acz_ampLength(varargin)
     switch args.dataTyp
         case 'P'
             R = measure.resonatorReadout_ss(rq); 
-            R.state = 2;
+            R.state = 1;
             R.name = [rq.name,' ',R.name];
         case 'Phase'
             R = measure.phase(qt);
@@ -102,10 +102,9 @@ function varargout = acz_ampLength(varargin)
             proc = ((X.*Ip)*Y2m)*CZ;
             R.setProcess(proc);
         else
-            proc = ((X.*Ip)*Y2m)*CZ*Y2p;
-
-            proc = (X.*X_)*CZ;
-            R.state = 1;
+            proc = (X.*X_)*CZ; % for |11> state leakage
+            
+            % proc = ((X.*Ip)*Y2m)*CZ*Y2p; % CNOT
 
             proc.Run();
             R.delay = proc.length;

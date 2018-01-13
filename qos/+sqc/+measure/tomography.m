@@ -13,11 +13,12 @@ classdef (Abstract = true) tomography < qes.measurement.measurement
 %             end
 
 	properties
+        delay = 8; % idle length before measurement operations, non negative integers
 		showProgress@logical scalar = true; % print measurement progress to command window or not
 		progInfoPrefix = ''
-        xyGatePhaseOffset; % introduced to shift xy gate phase in single qubit phase tomo
 	end
 	properties (SetAccess = private)
+		isParallel@logical scalar = false; % joint(multi-qubit) tomography or parallel(single-qubit) tomography
 		qubits
     end
     properties (GetAccess = private, SetAccess = private)
@@ -27,7 +28,11 @@ classdef (Abstract = true) tomography < qes.measurement.measurement
         numReadouts
     end
     methods
-        function obj = tomography(qubits, readoutGates)
+        function obj = tomography(qubits, readoutGates,isParallel)
+            obj = obj@qes.measurement.measurement([]);
+			if nargin > 2
+				obj.isParallel = isParallel;
+            end
 			import sqc.op.physical.gate.*
 			if ~iscell(qubits)
                 qubits = {qubits};
@@ -38,14 +43,13 @@ classdef (Abstract = true) tomography < qes.measurement.measurement
                     qubits{ii} = sqc.util.qName2Obj(qubits{ii});
 				end
             end
-            obj = obj@qes.measurement.measurement([]);
-            obj.xyGatePhaseOffset = zeros(1,numTomoQs);
 			obj.qubits = qubits;
 			obj.readoutGates = cell(1,numTomoQs);
             obj.numReadouts = numel(readoutGates);
             for ii = 1:obj.numReadouts
                 readoutGates{ii} = str2func(['@(q)sqc.op.physical.gate.',readoutGates{ii},'(q)']);
             end
+			
 			for ii = 1:numTomoQs
                 for jj = 1:obj.numReadouts
                     % in looper, the last element is swept first(the inner most loop index)
@@ -53,20 +57,33 @@ classdef (Abstract = true) tomography < qes.measurement.measurement
                 end
             end
             obj.numericscalardata = false;
-            obj.R = sqc.measure.resonatorReadout(obj.qubits);
+			obj.R = sqc.measure.resonatorReadout(obj.qubits,~isParallel);
         end
         function Run(obj)
             Run@qes.measurement.measurement(obj);
+			if obj.isParallel
+                obj.runParallel();
+			else
+				obj.runJoint();
+			end
+        end
+    end
+	methods(Access = private)
+		function runJoint(obj)
 			numTomoQs = numel(obj.qubits);
 			lpr = qes.util.looper_(obj.readoutGates);
 			data = nan*ones(obj.numReadouts^numTomoQs,2^numTomoQs);
 			numShots = obj.numReadouts^numTomoQs;
+            if obj.delay > 0
+                delayI = sqc.op.physical.gate.I(obj.qubits{1});
+                delayI.ln = obj.delay;
+            end
 			idx = 0;
 			while true
 				idx = idx + 1;
 				if obj.showProgress
 					home;
-					disp(sprintf('%sSate tomography: %0.0f of %0.0f',...
+					disp(sprintf('%sState tomography: %0.0f of %0.0f',...
 						obj.progInfoPrefix, idx-1, numShots));
 				end
 				rGates = lpr();
@@ -78,22 +95,14 @@ classdef (Abstract = true) tomography < qes.measurement.measurement
 %                     rGates{1}.phaseOffset = obj.xyGatePhaseOffset;
 %                 end
                 
-                
-                for uu = 1:numTomoQs
-                    if isa(rGates{uu},'sqc.op.physical.gate.XY_base')
-                        rGates{uu}.phaseOffset = obj.xyGatePhaseOffset(uu);
-                    end
-                end
-
+        
 				P = rGates{1};
-                
-%                 if idx == 7
-%                     kkk = 1;
-%                 end
-                
 				for ii = 2:numTomoQs
 					P = P.*rGates{ii};
-				end
+                end
+                if obj.delay > 0
+                    P = delayI*P;
+                end
 				if ~isempty(obj.process)
 					P = obj.process*P;
                 end
@@ -103,8 +112,40 @@ classdef (Abstract = true) tomography < qes.measurement.measurement
 			end
             obj.data = data;
 			obj.dataready = true;
-        end
-    end
+		end
+		function runParallel(obj)
+			numTomoQs = numel(obj.qubits);
+			data = nan(numTomoQs,2,obj.numReadouts);
+            if obj.delay > 0
+                delayI = sqc.op.physical.gate.I(obj.qubits{1});
+                delayI.ln = obj.delay;
+            end
+			for ii = 1:obj.numReadouts
+				if obj.showProgress
+					home;
+					disp(sprintf('%sSate tomography: %0.0f of %0.0f',...
+						obj.progInfoPrefix, ii, obj.numReadouts));
+				end
+				opLn = 0;
+				P = obj.readoutGates{1}{ii};
+				for jj = 2:numTomoQs
+					P = P.*obj.readoutGates{jj}{ii};
+				end
+				if obj.delay > 0
+					P = delayI*P;
+				end
+				if ~isempty(obj.process)
+					P = obj.process*P;
+                end
+				obj.R.delay = P.length;
+				P.Run();
+				data(:,:,ii) = obj.R();
+			end
+
+            obj.data = data;
+			obj.dataready = true;
+		end
+	end
 	methods(Hidden = true)
 		function setProcess(obj,p)
 			% for process tomography

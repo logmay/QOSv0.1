@@ -1,5 +1,5 @@
 function readoutFreqDiagram(maxSidebandFreq,qubits)
-
+% data_taking.public.util.readoutFreqDiagram(500e6);
 %
 
 % Copyright 2017 Yulin Wu, University of Science and Technology of China
@@ -54,7 +54,7 @@ function readoutFreqDiagram(maxSidebandFreq,qubits)
     flb = max(mfr)-maxSidebandFreq/1e9;
     fub = min(mfr)+maxSidebandFreq/1e9;
     
-    h = qes.ui.qosFigure('Readout Resonator Freq. Diagram',true);
+    h = qes.ui.qosFigure('Readout Resonator Freq. Diagram',false);
     pos = get(h,'Position');
     pos(2) = pos(2) - pos(4);
     pos(4) = 2*pos(4);
@@ -66,7 +66,7 @@ function readoutFreqDiagram(maxSidebandFreq,qubits)
     hold(ax,'on');
     for ii = 1:numQs
         line([ii-0.5,ii+0.5],[fr(ii),fr(ii)]/1e9,...
-            'Parent',ax,'LineStyle','-',...
+            'Parent',ax,'LineStyle','-','Color',[0,0,0],...
             'LineWidth',2);
     end
     set(ax,'XTick',1:numQs,'XTickLabels',qNames);
@@ -80,15 +80,31 @@ function readoutFreqDiagram(maxSidebandFreq,qubits)
         fc = 1e9*mfr;
     end
     fcline = line([0,numQs+1],[fc,fc]/1e9,...
-            'Parent',ax,'LineStyle','--','Color',[1,0,0],...
+            'Parent',ax,'LineStyle','-','Color',[1,0,0],...
             'LineWidth',2);
 
     sbFreqs = fr - fc;
-    c_sbFreqs = (fc - sbFreqs)/1e9;
-    c_sbFreqsline = fcline;
+    n1_sbFreqs = (fc - sbFreqs)/1e9;
+    n1_sbFreqsline = fcline;
     for ii = 1:numQs
-        c_sbFreqsline(ii) = line([0,numQs+1],[c_sbFreqs(ii),c_sbFreqs(ii)],...
-            'Parent',ax,'LineStyle',':','Color',[1,0,0],...
+        n1_sbFreqsline(ii) = line([0,numQs+1],[n1_sbFreqs(ii),n1_sbFreqs(ii)],...
+            'Parent',ax,'LineStyle','--','Color',[1,0,0],...
+            'LineWidth',1);
+    end
+    
+    n2_sbFreqs = (fc - 2*sbFreqs)/1e9;
+    n2_sbFreqsline = fcline;
+    for ii = 1:numQs
+        n2_sbFreqsline(ii) = line([0,numQs+1],[n2_sbFreqs(ii),n2_sbFreqs(ii)],...
+            'Parent',ax,'LineStyle',':','Color',[0,1,0],...
+            'LineWidth',1);
+    end
+    
+    p2_sbFreqs = (fc + 2*sbFreqs)/1e9;
+    p2_sbFreqsline = fcline;
+    for ii = 1:numQs
+        p2_sbFreqsline(ii) = line([0,numQs+1],[p2_sbFreqs(ii),p2_sbFreqs(ii)],...
+            'Parent',ax,'LineStyle',':','Color',[0,0,1],...
             'LineWidth',1);
     end
         
@@ -96,15 +112,25 @@ function readoutFreqDiagram(maxSidebandFreq,qubits)
     sld = uicontrol('Parent',h,'Style', 'slider',...
         'Min',flb,'Max',fub,'Value',mfr,...
         'Units','normalized','Position', pos,... 
-        'Callback', @sldFunc); 
+        'SliderStep',[0.002,0.1],'Callback', @sldFunc); 
     
     function sldFunc(~,~)
         fc = 1e9*get(sld,'Value');
         set(fcline,'YData',[fc,fc]/1e9);
         sbFreqs = fr - fc;
-        c_sbFreqs = (fc - sbFreqs)/1e9;
+        n1_sbFreqs = (fc - sbFreqs)/1e9;
         for ii = 1:numQs
-            set(c_sbFreqsline(ii),'YData',[c_sbFreqs(ii),c_sbFreqs(ii)]);
+            set(n1_sbFreqsline(ii),'YData',[n1_sbFreqs(ii),n1_sbFreqs(ii)]);
+        end
+        
+        n2_sbFreqs = (fc - 2*sbFreqs)/1e9;
+        for ii = 1:numQs
+            set(n2_sbFreqsline(ii),'YData',[n2_sbFreqs(ii),n2_sbFreqs(ii)]);
+        end
+        
+        p2_sbFreqs = (fc + 2*sbFreqs)/1e9;
+        for ii = 1:numQs
+            set(p2_sbFreqsline(ii),'YData',[p2_sbFreqs(ii),p2_sbFreqs(ii)]);
         end
     end
 

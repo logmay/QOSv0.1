@@ -9,10 +9,12 @@ function g = Z(qubit)
 			g = Z_z(qubit);
 		case 'xy' % implement by using X Y gates
 			g = X(qubit)*Y(qubit);
-            g.setGateClass('Z');
+        case 'phase'
+            g = Z_phase(qubit);
 		otherwise
-			error('unrecognized Z gate type: %s, available z gate options are: xy and z',...
+			error('unrecognized Z gate type: %s, available z gate options are: xy ,phase and z',...
 				qubit.g_Z_typ);
 	
-	end
+    end
+    g.setGateClass('Z');
 end

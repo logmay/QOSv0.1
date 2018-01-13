@@ -5,7 +5,23 @@ function idx = find(A,B)
 % Copyright 2016 Yulin Wu, USTC
 % mail4ywu@gmail.com/mail4ywu@icloud.com
 
-	assert(~iscell(A)&iscell(B))
+    if isempty(A) || isempty(B)
+        idx = [];
+        return;
+    end
+    if ~ischar(A) && numel(A) > 1
+        error('A is an array, scalar expected');
+    end
+    if iscell(A)
+        A = A{1};
+    end
+    if ~iscell(B)
+        B_ = cell(1,numel(B));
+        for ii = 1:numel(B)
+            B_{ii} = B(ii);
+        end
+        B = B_;
+    end
     idx = [];
     if ischar(A)
         for ii  = 1:numel(B)

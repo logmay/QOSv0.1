@@ -5,7 +5,7 @@ function varargout = spin_echo(varargin)
 % dp: detune by changing the second pi/2 pulse tracking frame
 % dz: detune by z detune pulse
 % 
-% <_o_> = spin_echo('qubit',_c&o_,'mode',m...
+% <_o_> = spin_echo('qubit',_c|o_,'mode',m...
 %       'time',[_i_],'detuning',<_f_>,...
 %       'notes',<_c_>,'gui',<_b_>,'save',<_b_>)
 % _f_: float
@@ -13,7 +13,7 @@ function varargout = spin_echo(varargin)
 % _c_: char or char string
 % _b_: boolean
 % _o_: object
-% a&b: default type is a, but type b is also acceptable
+% a|b: default type is a, but type b is also acceptable
 % []: can be an array, scalar also acceptable
 % {}: must be a cell array
 % <>: optional, for input arguments, assume the default value if not specified

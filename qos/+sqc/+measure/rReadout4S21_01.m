@@ -14,7 +14,7 @@ classdef rReadout4S21_01 < sqc.measure.resonatorReadout
                 throw(MException('QOS_rReadout4S21_01:illegalNumQubits',...
                     'rReadout4S21_01 only applicable to one qubit, %0.0f given', numel(qubit)));
             end
-            obj = obj@sqc.measure.resonatorReadout(qubit);
+            obj = obj@sqc.measure.resonatorReadout(qubit,false,true);
             obj.numericscalardata = false;
         end
         function Run(obj)

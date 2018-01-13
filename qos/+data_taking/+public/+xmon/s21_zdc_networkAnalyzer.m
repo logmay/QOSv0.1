@@ -1,7 +1,7 @@
 function varargout = s21_zdc_networkAnalyzer(varargin)
 % [s21] vs [power] with network analyzer
 % 
-%  <_o_> = s21_zdc_networkAnalyzer('qubit',_c&o_,'NAName',<[_c_]>,...
+%  <_o_> = s21_zdc_networkAnalyzer('qubit',_c|o_,'NAName',<[_c_]>,...
 %       'startFreq',_f_,'stopFreq',_f_,...
 %       'numFreqPts',_i_,'avgcounts',_i_,'NApower',[_f_],...
 %       'biasAmp',[_f_],'bandwidth',_f_,...
@@ -11,7 +11,7 @@ function varargout = s21_zdc_networkAnalyzer(varargin)
 % _c_: char
 % _b_: boolean
 % _o_: object
-% a&b: default type is a, but type b is also acceptable
+% a|b: default type is a, but type b is also acceptable
 % []: can be an array, scalar also acceptable
 % {}: must be a cell array
 % <>: optional, for input arguments, assume the default value if not specified

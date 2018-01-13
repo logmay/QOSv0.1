@@ -1,5 +1,6 @@
 classdef hvar < handle
-    % hvar implements handle variable
+    % hvar wraps numeric primitives to handle class objects for case when
+    % one needs to pass a numeric variable by reference
 
 % Copyright 2015 Yulin Wu, Institute of Physics, Chinese  Academy of Sciences
 % mail4ywu@gmail.com/mail4ywu@icloud.com

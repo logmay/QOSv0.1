@@ -6,12 +6,12 @@ classdef phaseTomography < sqc.measure.tomography
 % mail4ywu@gmail.com/mail4ywu@icloud.com
 
     methods
-        function obj = phaseTomography(qubit)
-            if numel(qubit) > 1
-                error('phaseTomography is single qubit measurement, more than one qubit given.');
-            end
+        function obj = phaseTomography(qubits, isParallel)
+			if nargin < 2
+				isParallel = false;
+			end
             % obj = obj@sqc.measure.tomography(qubits,{'X2p','X2m','Y2p','Y2m'});
-            obj = obj@sqc.measure.tomography(qubit,{'Y2p','X2m'});
+            obj = obj@sqc.measure.tomography(qubits,{'Y2p','X2m'},isParallel);
         end
     end
 end

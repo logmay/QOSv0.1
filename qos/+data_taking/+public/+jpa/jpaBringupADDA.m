@@ -28,7 +28,7 @@ function varargout = jpaBringupADDA(varargin)
         'biasAmp',[],'pumpAmp',[],'pumpFreq',[],'pumpPower',[],...
         'rAvg',500,'gui',false,'notes','','save',true});
     jpa = data_taking.public.util.getJPAs(args,{'jpa'});
-
+    
     virtualQubit = sqc.util.virtualXmon();
     virtualQubit.channels.r_da_i.instru = jpa.channels.signal_da_i.instru;
     virtualQubit.channels.r_da_i.chnl = jpa.channels.signal_da_i.chnl;
@@ -43,45 +43,56 @@ function varargout = jpaBringupADDA(varargin)
     virtualQubit.r_jpa = jpa.name;
     virtualQubit.r_avg = args.rAvg;
     virtualQubit.r_ln = args.signalLn;
+    virtualQubit.r_wvSettings = struct('edgeWidth',10,  'ring_w',6, 'ring_amp',0);
     virtualQubit.r_iq2prob_center0 = 0;
     virtualQubit.r_iq2prob_center1 = 1;
     virtualQubit.r_iq2prob_center2 = 2;
+    virtualQubit.r_iq2prob_intrinsic = true;
+    virtualQubit.r_iq2prob_fidelity = [1,1];
     virtualQubit.r_truncatePts = [0,0];
+    
+    virtualQubit.r_fc = args.signalFreq(1)-args.signalSbFreq;
+    virtualQubit.r_freq = args.signalFreq(1);
+    virtualQubit.r_uSrcPower = args.signalPower;
+    virtualQubit.r_amp = args.signalAmp(1);
+    
+    R = sqc.measure.resonatorReadout_ss(virtualQubit);
+    % jpa = data_taking.public.util.getJPAs(args,{'jpa'});
+    jpaRunner = R.jpaRunner;
+    jpa = jpaRunner.jpa;
     
     s = qes.sweep.empty();
     if numel(args.biasAmp) == 1
-        virtualQubit.r_jpa_biasAmp = args.biasAmp;
+        jpa.biasAmp = args.biasAmp;
     elseif numel(args.biasAmp) > 1
-        x = expParam(virtualQubit,'r_jpa_biasAmp');
+        x = expParam(jpa,'biasAmp');
         x.name = 'bias amplitude';
         s_ = sweep(x);
         s_.vals = args.biasAmp;
         s = [s,s_];
     end
     if numel(args.pumpFreq) == 1
-        virtualQubit.r_jpa_pumpFreq = args.pumpFreq;
+        jpa.pumpFreq = args.pumpFreq;
     elseif numel(args.pumpFreq) > 1
-        x = expParam(virtualQubit,'r_jpa_pumpFreq');
+        x = expParam(jpa,'pumpFreq');
         x.name = 'pump frequency(Hz)';
         s_ = sweep(x);
         s_.vals = args.pumpFreq;
         s = [s,s_];
     end
     if numel(args.pumpAmp) == 1
-        virtualQubit.r_jpa_pumpAmp = args.pumpAmp;
+        jpa.pumpAmp = args.pumpAmp;
     elseif numel(args.pumpAmp)> 1
-        x = expParam(virtualQubit,'r_jpa_pumpAmp');
+        x = expParam(jpa,'pumpAmp');
         x.name = 'pump amplitude';
         s_ = sweep(x);
         s_.vals = args.pumpAmp;
         s = [s,s_];
     end
-    if isempty(args.pumpPower)
-        virtualQubit.r_jpa_pumpPower = jpa.pumpPower;
-    elseif numel(args.pumpPower) == 1
-        virtualQubit.r_jpa_pumpPower = args.pumpPower;
+    if numel(args.pumpPower) == 1
+        jpa.pumpPower = args.pumpPower;
     else
-        x = expParam(virtualQubit,'r_jpa_pumpPower');
+        x = expParam(jpa,'pumpPower');
         x.name = 'pump power(dBm)';
         s_ = sweep(x);
         s_.vals = args.pumpPower;
@@ -108,9 +119,7 @@ function varargout = jpaBringupADDA(varargin)
         s_.vals = {args.signalFreq,args.signalFreq};
         s = [s,s_];
     end
-    
-    virtualQubit.r_uSrcPower = args.signalPower;
-    
+
     if isempty(s) % we need at least one sweep
         x = expParam(virtualQubit,'r_freq');
         x.name = 'signal frequency(Hz)';
@@ -123,6 +132,7 @@ function varargout = jpaBringupADDA(varargin)
     function generateReadout()
         R = sqc.measure.resonatorReadout_ss(virtualQubit);
         R.swapdata = true;
+        R.setJPA(jpa);
         R.name = 'IQ';
         R.datafcn = @(x)mean(x);
         e.measurements = R;

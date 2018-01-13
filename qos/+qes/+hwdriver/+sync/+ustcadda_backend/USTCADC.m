@@ -69,6 +69,7 @@ classdef USTCADC < handle
             obj.SetMacAddr(obj.mac');
             obj.SetSampleDepth(obj.sample_depth);
             obj.SetTrigCount(obj.sample_count);
+            obj.SetMode(0);
         end
         
         function Close(obj)
@@ -152,7 +153,18 @@ classdef USTCADC < handle
         end
         
         function SetMode(obj,mode)
-            % pass
+            if obj.isopen
+                if(mode == 0)
+                    data = [1,1,17,17,17,17,17,17];
+                else
+                    data = [1,1,34,34,34,34,34,34];
+                end
+                pdata = libpointer('uint8Ptr', data);
+                [ret,~] = calllib(obj.driver,'SendData',int32(8),pdata);
+                if(ret ~= 0)
+                   error('USTCADC:SetMode','SetMode failed!');
+                end
+            end
         end
         
         function [ret,I,Q] = RecvData(obj,row,column)

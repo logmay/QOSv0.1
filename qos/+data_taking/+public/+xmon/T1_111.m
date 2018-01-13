@@ -4,9 +4,9 @@ function varargout = T1_111(varargin)
 % q1, q2, q3 can be the same qubit or diferent qubits,
 % q1, q2, q3 all has to be the selected qubits in the current session,
 % 
-% <_o_> = T1_111('biasQubit',_c&o_,'biasAmp',<[_f_]>,'biasDelay',<_i_>,...
+% <_o_> = T1_111('biasQubit',_c|o_,'biasAmp',<[_f_]>,'biasDelay',<_i_>,...
 %       'backgroundWithZBias',<_b_>,...
-%       'driveQubit',_c&o_,'readoutQubit',_c&o_,...
+%       'driveQubit',_c|o_,'readoutQubit',_c|o_,...
 %       'time',[_i_],...
 %       'notes',<_c_>,'gui',<_b_>,'save',<_b_>)
 % _f_: float
@@ -14,7 +14,7 @@ function varargout = T1_111(varargin)
 % _c_: char or char string
 % _b_: boolean
 % _o_: object
-% a&b: default type is a, but type b is also acceptable
+% a|b: default type is a, but type b is also acceptable
 % []: can be an array, scalar also acceptable
 % {}: must be a cell array
 % <>: optional, for input arguments, assume the default value if not specified
@@ -36,11 +36,19 @@ if ~isempty(args.r_avg)
     readoutQubit.r_avg=args.r_avg;
 end
 
-X = gate.X(driveQubit);
+if strcmp(driveQubit.g_XY_typ,'hPi')
+    X2p = gate.X2p(driveQubit);
+    X = X2p^2;
+else
+    X = gate.X(driveQubit);
+end
 I = gate.I(biasQubit);
 I.ln = args.biasDelay;
 Z = op.zBias4Spectrum(biasQubit);
 function procFactory(delay)
+    if strcmp(driveQubit.g_XY_typ,'hPi')
+        X = X2p^2;
+    end
     if delay > 0
         Z.ln = delay;
         proc = X*I*Z;
@@ -52,10 +60,17 @@ function procFactory(delay)
 end
 R = measure.rReadout4T1(readoutQubit,X.mw_src{1});
 function rerunZ()
-    piAmpBackup = X.amp;
-    X.amp = 0;
-    procFactory(y.val);
-    X.amp = piAmpBackup;
+    if strcmp(driveQubit.g_XY_typ,'hPi')
+        piAmpBackup = X2p.amp;
+        X2p.amp = 0;
+        procFactory(y.val);
+        X2p.amp = piAmpBackup;
+    else
+        piAmpBackup = X.amp;
+        X.amp = 0;
+        procFactory(y.val);
+        X.amp = piAmpBackup;
+    end
 end
 if args.backgroundWithZBias
     R.postRunFcns = @rerunZ;

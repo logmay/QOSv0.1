@@ -4,7 +4,7 @@ function q = virtualXmon()
 % Copyright 2017 Yulin Wu, University of Science and Technology of China
 % mail4ywu@gmail.com/mail4ywu@icloud.com
     
-    q = sqc.qobj.qubit();
+    q = sqc.qobj.xmon();
     q.name = 'virtualQubit';
     addprop(q,'r_avg');
     addprop(q,'r_jpa_pumpPower');
@@ -19,6 +19,7 @@ function q = virtualXmon()
     addprop(q,'r_iq2prob_center0');
     addprop(q,'r_iq2prob_center1');
     addprop(q,'r_iq2prob_center2');
+    addprop(q,'r_iq2prob_intrinsic');
     addprop(q,'r_jpa');
     addprop(q,'r_truncatePts');
     addprop(q,'r_wvTyp');

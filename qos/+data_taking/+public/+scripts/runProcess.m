@@ -5,16 +5,71 @@ import sqc.op.physical.*
 import sqc.measure.*
 import sqc.util.qName2Obj
 %%
-q = qName2Obj('q8');
+q = qName2Obj('q3');
 g1 = gate.Y2m(q);
 g2 = gate.I(q);
-g2.ln = 500;
-g3 = gate.Y2p(q);
+g2.ln = 4;
+g3 = gate.X2p(q);
 proc = g1*g2*g3;
 R = resonatorReadout(q);
 R.delay = proc.length;
 proc.Run();
 data = R()
+%% validate Z_arbPhase
+q = qName2Obj('q1');
+g1 = gate.Y2m(q);
+g2 = gate.I(q);
+g2.ln = 2;
+phaseSet = 2;
+g3 = op.Z_arbPhase(q,phaseSet);
+proc = g1*g2*g3;
+R = phase(q);
+R.setProcess(proc);
+phaseMeasured = R();
+disp('<<<< validate arbitary z rotation >>>>');
+disp(['phase set: ', num2str(phaseSet), ', phase measured: ', num2str(phaseMeasured)]);
+%% CZ PHASE
+q1 = qName2Obj('q3');
+q2 = qName2Obj('q2');
+g1 = gate.Y2m(q2);
+g2 = gate.CZ(q1,q2);
+g3 = gate.I(q2);
+g3.ln = 1;
+proc = g1*g2*g3;
+R = phase(q2);
+R.setProcess(proc);
+phaseMeasured = R();
+disp(['phase measured: ', num2str(phaseMeasured)]);
+%% CZ Z Pulse Trailing PHASE
+q1 = qName2Obj('q3');
+q2 = qName2Obj('q2');
+g1 = gate.Y2m(q2);
+g2 = gate.CZ(q1,q2);
+g3 = gate.I(q2);
+R = phase(q2);
+ln = 1:20:600;
+numLn = numel(ln);
+phaseMeasured = nan(1,numLn);
+figure();
+for ii = 1:numLn
+    g3.ln = ln(ii);
+    proc = g1*g2*g3;
+    R.setProcess(proc);
+    phaseMeasured(ii) = R();
+    plot(ln/2, phaseMeasured);
+    xlabel('measurement delay(ns)');
+    ylabel('phase(rad)');
+    drawnow;
+end
+%%
+q1 = qName2Obj('q1');
+q2 = qName2Obj('q2');
+g11 = gate.I(q1); g12 = gate.Y2p(q2);
+g21 = gate.I(q1); g22 = gate.Z2p(q2);
+                 % g22 = gate.I(q2);
+g31 = gate.I(q1); g32 = gate.Y2p(q2);
+proc = (g11.*g12)*(g21.*g22)*(g31.*g32);
+proc.Run();
 %% acz(CNOT) target qubit phase, control qubit: |1>
 q1 = qName2Obj('q9');
 q2 = qName2Obj('q8');
@@ -427,9 +482,9 @@ for ii = 1:10
 end
 clc
 mean(data,1)
-%% 
+%%
 import sqc.util.qName2Obj;
-q1 = qName2Obj('q9');
+q1 = qName2Obj('q7');
 q2 = qName2Obj('q8');
 
 I1 = gate.I(q1);
@@ -450,119 +505,119 @@ Y2m2 = gate.Y2m(q2);
 
 CZ = gate.CZ(q1,q2);
 
-%
-% proc = (Y1.*(Y2p2*X2m2))*CZ*(X2m1.*Y2p2)*CZ*((X2p1*Y2p1*X2p1).*Y2p2)*CZ*(Y1.*Y2m2)*CZ*(X2m1.*Y2p2)*CZ*(Y2m1.*(Y2*X2p2));
-
-proc = (Y1.*(Y2p2*X2m2))*CZ; % first CZ
-q1.g_XY_phaseOffset = q1.g_XY_phaseOffset + CZ.dynamicPhase(1);
-q2.g_XY_phaseOffset = q2.g_XY_phaseOffset + CZ.dynamicPhase(2);
-
-    I1 = gate.I(q1);
-    X1 = gate.X(q1);
-    Y1 = gate.Y(q1);
-    X2p1 = gate.X2p(q1);
-    X2m1 = gate.X2m(q1);
-    Y2p1 = gate.Y2p(q1);
-    Y2m1 = gate.Y2m(q1);
-
-    I2 = gate.I(q2);
-    X2 = gate.X(q2);
-    Y2 = gate.Y(q2);
-    X2p2 = gate.X2p(q2);
-    X2m2 = gate.X2m(q2);
-    Y2p2 = gate.Y2p(q2);
-    Y2m2 = gate.Y2m(q2);
-
-proc = proc*(X2m1.*Y2p2)*CZ; % second CZ
-q1.g_XY_phaseOffset = q1.g_XY_phaseOffset + CZ.dynamicPhase(1);
-q2.g_XY_phaseOffset = q2.g_XY_phaseOffset + CZ.dynamicPhase(2);
-
-    I1 = gate.I(q1);
-    X1 = gate.X(q1);
-    Y1 = gate.Y(q1);
-    X2p1 = gate.X2p(q1);
-    X2m1 = gate.X2m(q1);
-    Y2p1 = gate.Y2p(q1);
-    Y2m1 = gate.Y2m(q1);
-
-    I2 = gate.I(q2);
-    X2 = gate.X(q2);
-    Y2 = gate.Y(q2);
-    X2p2 = gate.X2p(q2);
-    X2m2 = gate.X2m(q2);
-    Y2p2 = gate.Y2p(q2);
-    Y2m2 = gate.Y2m(q2);
-
-proc = proc*((X2p1*Y2p1*X2p1).*Y2p2)*CZ; % 3rd CZ
-q1.g_XY_phaseOffset = q1.g_XY_phaseOffset + CZ.dynamicPhase(1);
-q2.g_XY_phaseOffset = q2.g_XY_phaseOffset + CZ.dynamicPhase(2);
-
-    I1 = gate.I(q1);
-    X1 = gate.X(q1);
-    Y1 = gate.Y(q1);
-    X2p1 = gate.X2p(q1);
-    X2m1 = gate.X2m(q1);
-    Y2p1 = gate.Y2p(q1);
-    Y2m1 = gate.Y2m(q1);
-
-    I2 = gate.I(q2);
-    X2 = gate.X(q2);
-    Y2 = gate.Y(q2);
-    X2p2 = gate.X2p(q2);
-    X2m2 = gate.X2m(q2);
-    Y2p2 = gate.Y2p(q2);
-    Y2m2 = gate.Y2m(q2);
-    
-proc = proc*(Y1.*Y2m2)*CZ; % 4th CZ
-q1.g_XY_phaseOffset = q1.g_XY_phaseOffset + CZ.dynamicPhase(1);
-q2.g_XY_phaseOffset = q2.g_XY_phaseOffset + CZ.dynamicPhase(2);
-
-    I1 = gate.I(q1);
-    X1 = gate.X(q1);
-    Y1 = gate.Y(q1);
-    X2p1 = gate.X2p(q1);
-    X2m1 = gate.X2m(q1);
-    Y2p1 = gate.Y2p(q1);
-    Y2m1 = gate.Y2m(q1);
-
-    I2 = gate.I(q2);
-    X2 = gate.X(q2);
-    Y2 = gate.Y(q2);
-    X2p2 = gate.X2p(q2);
-    X2m2 = gate.X2m(q2);
-    Y2p2 = gate.Y2p(q2);
-    Y2m2 = gate.Y2m(q2);
-    
-proc = proc*(X2m1.*Y2p2)*CZ; % 5th CZ
-q1.g_XY_phaseOffset = q1.g_XY_phaseOffset + CZ.dynamicPhase(1);
-q2.g_XY_phaseOffset = q2.g_XY_phaseOffset + CZ.dynamicPhase(2);
-
-    I1 = gate.I(q1);
-    X1 = gate.X(q1);
-    Y1 = gate.Y(q1);
-    X2p1 = gate.X2p(q1);
-    X2m1 = gate.X2m(q1);
-    Y2p1 = gate.Y2p(q1);
-    Y2m1 = gate.Y2m(q1);
-
-    I2 = gate.I(q2);
-    X2 = gate.X(q2);
-    Y2 = gate.Y(q2);
-    X2p2 = gate.X2p(q2);
-    X2m2 = gate.X2m(q2);
-    Y2p2 = gate.Y2p(q2);
-    Y2m2 = gate.Y2m(q2); 
-    
-proc = proc*(Y2m1.*(Y2*X2p2));
+proc =  CZ*Y2p1*CZ;
 
 R = resonatorReadout({q1,q2});
 R.delay = proc.length;
 
-data = zeros(10,4);
-for ii = 1:10
-    proc.Run();
-    data(ii,:) = R();
-    data(ii,:)
-end
-clc
-mean(data,1)
+proc.Run();
+data = R()
+
+%%
+import sqc.util.qName2Obj;
+q1 = qName2Obj('q5');
+q2 = qName2Obj('q6');
+
+X1 = gate.X(q1);
+% X1 = gate.I(q1);
+CZ = gate.CZ(q1,q2);
+
+proc =  X1*CZ;
+% proc =  X1;
+
+R = resonatorReadout_ss(q1);
+R.state = 1;
+R.delay = proc.length;
+
+proc.Run();
+data = R()
+%%
+import sqc.util.qName2Obj;
+q1 = qName2Obj('q9');
+q2 = qName2Obj('q8');
+
+CZ = gate.CZ(q1,q2);
+I = gate.I(q1);
+I.ln = CZ.length;
+X = gate.X(q1);
+
+p = CZ*X*CZ*X*CZ*X*CZ*X;
+p.Run();
+%%
+import sqc.util.qName2Obj;
+q1 = qName2Obj('q7');
+q2 = qName2Obj('q6');
+
+CZ12 = gate.CZ(q1,q2);
+X1 = gate.X(q1);
+X2 = gate.X(q2);
+Y1 = gate.Y(q1);
+Y2 = gate.Y(q2);
+
+p = CZ*X*CZ*X*CZ*X*CZ*X;
+p.Run();
+%% GHZ state
+setQSettings('r_avg',50000);
+% data = [];
+% qubits = {'q7','q6'};
+% gateMat = {'Y2p','Y2m';
+%             'CZ','CZ';
+%             'I','Y2p';};
+% qubits = {'q6','q7','q8'};
+% gateMat = {'Y2p','Y2m','I';
+%             'CZ','CZ','I';
+%             'I','Y2p','I';
+%             'I','I','Y2m';
+%             'I','CZ','CZ';
+%             'I','I','Y2p'};
+% qubits = {'q9','q8','q7','q6'};
+% gateMat = {'Y2p','Y2m','I','I';
+%             'CZ','CZ','I','I';
+%             'I','Y2p','I','I';
+%             'I','I','Y2m','I';
+%             'I','CZ','CZ','I';
+%             'I','I','Y2p','I';
+%             'I','I','I','Y2m';
+%             'I','I','CZ','CZ';
+%             'I','I','I','Y2p'};
+        
+qubits = {'q9','q8','q7','q6','q5'};
+gateMat = {'Y2p','Y2m','I','I','I';
+            'CZ','CZ','I','I','I';
+            'I','Y2p','I','I','I';
+            'I','I','Y2m','I','I';
+            'I','CZ','CZ','I','I';
+            'I','I','Y2p','I','I';
+            'I','I','I','Y2m','I';
+            'I','I','CZ','CZ','I';
+            'I','I','I','Y2p','I';
+            'I','I','I','I','Y2m';
+            'I','I','I','CZ','CZ';
+            'I','I','I','I','Y2p'};
+        
+p = gateParser.parse(qubits,gateMat);
+p.Run();
+R = resonatorReadout(qubits);
+R.delay = p.length;
+data = R();
+figure();bar(data);
+
+%%
+import sqc.util.qName2Obj;
+q1 = qName2Obj('q6');
+setQSettings('r_avg',10000);
+H = gate.H(q1);
+I = gate.I(q1);
+I.ln = 188;
+
+proc = H*I*I*H*I*H*I*H*I;
+I.ln = 2035;
+
+% proc = proc*I*gate.Y2p(q1);
+proc = gate.Y2p(q1);
+
+R = phase(q1);
+R.setProcess(proc);
+
+proc.Run();
+data = R()

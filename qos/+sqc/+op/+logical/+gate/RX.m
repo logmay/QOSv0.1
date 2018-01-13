@@ -6,7 +6,8 @@ classdef RX < sqc.op.logical.operator
 % mail4ywu@gmail.com/mail4ywu@icloud.com
     methods
         function obj = RX(theta)
-            obj = obj@sqc.op.logical.operator([cos(theta/2),-1i*sin(theta/2);-1i*sin(theta/2),cos(theta/2)]);
+            obj = obj@sqc.op.logical.operator(...
+                [cos(theta/2),-1i*sin(theta/2);-1i*sin(theta/2),cos(theta/2)]);
         end
     end
 end

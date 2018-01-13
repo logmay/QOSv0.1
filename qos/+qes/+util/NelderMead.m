@@ -52,6 +52,7 @@ function [ x_opt, x_trace, y_trace, n_feval] = NelderMead (function_handle, x0, 
 
 x = x0;
 tolerance = tolY;
+convergedCount = 0;
 
   rho = 1;    % rho > 0
   xi  = 2;    % xi  > max(rho, 1)
@@ -121,7 +122,7 @@ tolerance = tolY;
   % Yulin Wu
   x_trace = x(1,:); 
   y_trace = f(1);
-  traces = NaN(1,n_dim);
+  traces = NaN(1,n_dim+1);
   if plotTrace
       for ww = 1:n_dim
           if isgraphics(axs(ww))
@@ -363,7 +364,13 @@ tolerance = tolY;
 %
 %  Test for convergence
 %
-    converged = f(n_dim+1)-f(1) < tolerance;
+    if f(n_dim+1)-f(1) < tolerance
+        convergedCount = convergedCount + 1;
+    end
+    if convergedCount > 2 % we are dealing with noisy experimental data, Yulin Wu
+        converged = true;
+    end
+    
     if converged && isgraphics(traces(n_dim+1))
         title(axs(n_dim+1),[num2str(n_feval),'th evaluation, optimization terminate: Y tolerance reached.'])
     end
