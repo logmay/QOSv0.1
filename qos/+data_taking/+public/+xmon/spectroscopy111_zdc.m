@@ -56,7 +56,7 @@ R.delay = X.length;
 X.Run(); % from this point on X will assume that the dc source and mw source are set
 x = expParam(X.zdc_src{1},'dcval');
 x.name = [biasQubit.name,' zdc bias amplitude'];
-y = expParam(X.mw_src{1},'frequency');
+y = expParam(X,'mw_src_frequency');
 y.offset = -driveQubit.spc_sbFreq;
 y.name = [driveQubit.name,' driving frequency (Hz)'];
 y.callbacks ={@(x_) X.Run()};

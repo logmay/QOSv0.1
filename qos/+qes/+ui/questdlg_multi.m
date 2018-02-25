@@ -114,7 +114,7 @@ if nargin>5
 end
 
 % internal params
-bttnFontSize=0.6;
+bttnFontSize=0.5;
 btntxtH=2; 
 
 %% Buttons ordering definition
@@ -153,6 +153,12 @@ spaceW=2;
 menuFigH=figure('Units', 'normalized', 'Position', [.5, .5, .1, .1], 'MenuBar', 'none',...
    'NumberTitle', 'off', 'Name', dlgTitle, 'CloseRequestFcn', @FigCloseRequestFcn); 
 % 'CloseRequestFcn' override figure closing
+
+warning('off');
+jf = get(menuFigH,'JavaFrame');
+jf.setFigureIcon(javax.swing.ImageIcon(...
+    im2java(qes.ui.icons.qos1_32by32())));
+warning('on');
 
 % make sure figure form allows good text representation Get screen resolution in
 % characters

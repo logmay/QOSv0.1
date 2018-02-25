@@ -18,8 +18,9 @@ classdef jpaRunner < qes.qHandle
     methods
         function obj = jpaRunner(jpaObj)
            obj.jpa = jpaObj;
-           da = qes.qHandle.FindByClassProp('qes.hwdriver.hardware',...
-                    'name',jpaObj.channels.signal_da_i.instru);
+           da = qes.hwdriver.hardware.FindHwByName(jpaObj.channels.signal_da_i.instru);
+%            da = qes.qHandle.FindByClassProp('qes.hwdriver.hardware',...
+%                     'name',jpaObj.channels.signal_da_i.instru);
            % needs checking here because awg could be a network analyzer,
            % jpaRunner dose not handle cases of using a network analyzer as
            % singnal source for S21, we only deal with the standard way of
@@ -31,9 +32,12 @@ classdef jpaRunner < qes.qHandle
             end
 			obj.pumpDAChnl{1,1} = da.GetChnl(obj.jpa.channels.pump_i.chnl);
             obj.pumpDAChnl{2,1} = da.GetChnl(obj.jpa.channels.pump_q.chnl);
-            biasSrc_ = qes.qHandle.FindByClassProp('qes.hwdriver.hardware','name',jpaObj.channels.bias.instru);
+            
+            biasSrc_ = qes.hwdriver.hardware.FindHwByName(jpaObj.channels.bias.instru);
+%             biasSrc_ = qes.qHandle.FindByClassProp('qes.hwdriver.hardware','name',jpaObj.channels.bias.instru);
             obj.biasSrc = biasSrc_.GetChnl(jpaObj.channels.bias.chnl);
-            pumpMwSrc_ = qes.qHandle.FindByClassProp('qes.hwdriver.hardware','name',jpaObj.channels.pump_mw.instru);
+            pumpMwSrc_ = qes.hwdriver.hardware.FindHwByName(jpaObj.channels.pump_mw.instru);
+%             pumpMwSrc_ = qes.qHandle.FindByClassProp('qes.hwdriver.hardware','name',jpaObj.channels.pump_mw.instru);
             obj.pumpMwSrc = pumpMwSrc_.GetChnl(jpaObj.channels.pump_mw.chnl);
         end
         function Run(obj,refresh)
@@ -66,8 +70,8 @@ classdef jpaRunner < qes.qHandle
             DASequence.outputDelayByHardware = true;
 			DASequence.outputDelay = outputDelay;
             
-            obj.pumpDAChnl{1,1}.SendWave(DASequence,true);
-            obj.pumpDAChnl{2,1}.SendWave(DASequence,true); % important: true not false! the Q waveform data is all zeros in case zero frquency mixing
+            obj.pumpDAChnl{1,1}.SendWave(DASequence,true,0,0,0);
+            obj.pumpDAChnl{2,1}.SendWave(DASequence,true,0,0,0); % important: true not false! the Q waveform data is all zeros in case zero frquency mixing
         end
     end
     methods (Access = private)

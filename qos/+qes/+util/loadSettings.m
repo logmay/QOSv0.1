@@ -4,6 +4,7 @@ function [data, varargout] = loadSettings(spath, fields, withHis)
 % s = qes.util.loadSettings('F:\program\qes_settings',{'hardware','hwsettings1','ustcadda','ad_boards'})
 % s = qes.util.loadSettings('F:\program\qes_settings',{'hardware','hwsettings1','ustcadda','ad_boards','ADC2'})
 % s = qes.util.loadSettings('F:\program\qes_settings',{'hardware','hwsettings1','ustcadda','ad_boards','ADC2','records','demod_freq'})
+% [s, r, t] = qes.util.loadSettings('D:\settings\qCloud\s180204\',{'shared','g_cz','q3_q2','dynamicPhases'},true)
 
 % Copyright 2016 Yulin Wu, University of Science and Technology of China
 % mail4ywu@gmail.com/mail4ywu@icloud.com
@@ -18,24 +19,24 @@ function [data, varargout] = loadSettings(spath, fields, withHis)
     end
     if ~iscell(fields)
         if ~ischar(fields)
-            throw(MException('QOS_loadSettings:invalidInput',...
+            throw(MException('QOS:loadSettings:invalidInput',...
 				sprintf('fileds should be a cell array of char strings or a single char string.')));
         else
             fields = {fields};
         end
     end
     if ~isdir(spath)
-        throw(MException('QOS_loadSettings:invalidInput',sprintf('%s is not a valid directory.', strrep(spath,'\','\\'))));
+        throw(MException('QOS:loadSettings:invalidInput',sprintf('%s is not a valid directory.', strrep(spath,'\','\\'))));
     end
     if ~exist(spath,'dir')
-        throw(MException('QOS_loadSettings:settingsNotFound',...
+        throw(MException('QOS:loadSettings:settingsNotFound',...
 					sprintf('settings path %s not found.', strrep(spath,'\','\\'))));
     end
     numFields = numel(fields);
     ii = 1;
     while ii <= numFields
         if ~ischar(fields{ii})
-            throw(MException('QOS_loadSettings:invalidInput',...
+            throw(MException('QOS:loadSettings:invalidInput',...
 				sprintf('field name can not be a(n) ''%s'', char string only.', class(fields{ii}))));
         end
         subFields = strsplit(fields{ii},'.');
@@ -45,7 +46,7 @@ function [data, varargout] = loadSettings(spath, fields, withHis)
         end
         fields = [fields(1:ii-1), subFields, fields(ii+1:end)];
         if ~isvarname(fields{ii})
-            throw(MException('QOS_loadSettings:invalidInput',sprintf('invalid field name ''%s''', fields{ii})));
+            throw(MException('QOS:loadSettings:invalidInput',sprintf('invalid field name ''%s''', fields{ii})));
         end
         ii = ii +1;
     end
@@ -55,7 +56,7 @@ function [data, varargout] = loadSettings(spath, fields, withHis)
         if strcmp(fileinfo(ii).name,'.') || strcmp(fileinfo(ii).name,'..') ||...
                 strcmp(fileinfo(ii).name(1),'_') % files, directories starts with an underscore are special purpose files/folders
             if ii == numFiles && ~isempty(fields)
-                throw(MException('QOS_loadSettings:settingsNotFound',...
+                throw(MException('QOS:loadSettings:settingsNotFound',...
 					sprintf('no field ''%s'' found in settings path %s.',fields{end}, strrep(spath,'\','\\'))));
             end
             continue;
@@ -87,7 +88,7 @@ function [data, varargout] = loadSettings(spath, fields, withHis)
                     if isvarname(fieldname)
 %                        data.(fieldname) = strsplit(strtrim(fileinfo(ii).name(cidx(end)+1:end-4)),',');
                         if isfield(data,fieldname)
-                            throw(MException('QOS_loadSettings:duplicateSettingsEntry',...
+                            throw(MException('QOS:loadSettings:duplicateSettingsEntry',...
                                 'duplicate settings entry ''%s'' found in settings path %s', fieldname, strrep(spath,'\','\\')));
                         end
 						data.(fieldname) = strtrim(fileinfo(ii).name(cidx(end)+1:end-4));
@@ -115,7 +116,7 @@ function [data, varargout] = loadSettings(spath, fields, withHis)
                             duplicateFile = fullfile(spath,fileinfo(ii).name);
                             delete(duplicateFile);
                             warning(['duplicate file : ', duplicateFile, ' deleted.']);
-%                             throw(MException('QOS_loadSettings:duplicateSettingsEntry',...
+%                             throw(MException('QOS:loadSettings:duplicateSettingsEntry',...
 %                                 'duplicate settings entry ''%s'' found in settings path %s', fieldname, strrep(spath,'\','\\')));
                         end
                         data.(fieldname) = data_;
@@ -126,13 +127,13 @@ function [data, varargout] = loadSettings(spath, fields, withHis)
 % %                        data.(fieldname) = strsplit(strtrim(fileinfo(ii).name(cidx(end)+1:end-4)),',');
 % 						datafile = fullfile(spath,'_data',strtrim(fileinfo(ii).name(cidx(end)+1:end-4))));
 % 						if ~exist(datafile,'file')
-% 							throw(MException('QOS_loadSettings:invalidSettingsValue',...
+% 							throw(MException('QOS:loadSettings:invalidSettingsValue',...
 % 								sprintf('data for field ''%s'' not found.', fields{1})));
 % 						end
 % 						try
 % 							data.(fieldname) = load(datafile);
 % 						catch
-% 							throw(MException('QOS_loadSettings:invalidSettingsValue',...
+% 							throw(MException('QOS:loadSettings:invalidSettingsValue',...
 % 								sprintf('failed in loading data for field ''%s''.', fields{1})));
 % 						end
 % 					end
@@ -148,7 +149,7 @@ function [data, varargout] = loadSettings(spath, fields, withHis)
             end
             if fileinfo(ii).isdir || length(fileinfo(ii).name) < 5 || ~strcmp(fileinfo(ii).name(end-2:end),'key')
                 if ii == numFiles
-                    throw(MException('QOS_loadSettings:settingsNotFound',...
+                    throw(MException('QOS:loadSettings:settingsNotFound',...
 						sprintf('no field ''%s'' found in settings path %s', fields{1}, strrep(spath,'\','\\'))));
                 end
                 continue;
@@ -163,14 +164,23 @@ function [data, varargout] = loadSettings(spath, fields, withHis)
                         data = jdata;
                     end
                     if withHis
+                        dataLn = numel(data);
+                        formatspec = '%s';
+                        for qqq = 1:dataLn
+                            formatspec = [formatspec,'%f'];
+                        end
                         hisFile = [hisFile,'.his'];
                         if exist(hisFile,'file')
                             try
                                 fid = fopen(hisFile,'r');
-                                fdata = textscan(fid,'%s%f');
+                                fdata = textscan(fid,formatspec);
                                 fclose(fid);
                                 varargout{2} = datenum(fdata{1},'yyyy-mm-dd_HH:MM:SS:FFF');
-                                varargout{1} = cell2mat(fdata(2));
+                                hisData = cell2mat(fdata(2));
+                                for qqq = 2:dataLn
+                                    hisData = [hisData,cell2mat(fdata(1+qqq))];
+                                end
+                                varargout{1} = hisData;
                                 
                             catch
                                 warning('read data from his file failed');
@@ -184,7 +194,7 @@ function [data, varargout] = loadSettings(spath, fields, withHis)
                         continue;
                     end
                     if ~isfield(jdata,fields{jj})
-                        throw(MException('QOS_loadSettings:settingsNotFound',...
+                        throw(MException('QOS:loadSettings:settingsNotFound',...
 							sprintf('no field ''%s'' found in settings path %s', fields{1}, strrep(spath,'\','\\'))));
                     end
                     if jj == numFields
@@ -195,12 +205,21 @@ function [data, varargout] = loadSettings(spath, fields, withHis)
                         if withHis
                             hisFile = [hisFile,'.',fields{jj},'.his'];
                             if exist(hisFile,'file')
+                                dataLn = numel(data);
+                                formatspec = '%s';
+                                for qqq = 1:dataLn
+                                    formatspec = [formatspec,'%f'];
+                                end
                                 try
                                     fid = fopen(hisFile,'r');
-                                    fdata = textscan(fid,'%s%f');
+                                    fdata = textscan(fid,formatspec);
                                     fclose(fid);
                                     varargout{2} = datenum(fdata{1},'yyyy-mm-dd_HH:MM:SS:FFF');
-                                    varargout{1} = cell2mat(fdata(2));
+                                    hisData = cell2mat(fdata(2));
+                                    for qqq = 2:dataLn
+                                        hisData = [hisData,cell2mat(fdata(1+qqq))];
+                                    end
+                                    varargout{1} = hisData;
                                 catch
                                     warning('read data from his file failed');
                                 end
@@ -244,12 +263,21 @@ function [data, varargout] = loadSettings(spath, fields, withHis)
                             if withHis
                                 hisFile = fullfile(spath,'_history',[fileinfo(ii).name(1:ln_field),'.his']);
                                 if exist(hisFile,'file')
+                                    dataLn = numel(data);
+                                    formatspec = '%s';
+                                    for qqq = 1:dataLn
+                                        formatspec = [formatspec,'%f'];
+                                    end
                                     try
                                         fid = fopen(hisFile,'r');
-                                        fdata = textscan(fid,'%s%f');
+                                        fdata = textscan(fid,formatspec);
                                         fclose(fid);
                                         varargout{2} = datenum(fdata{1},'yyyy-mm-dd_HH:MM:SS:FFF');
-                                        varargout{1} = cell2mat(fdata(2));
+                                        hisData = cell2mat(fdata(2));
+                                        for qqq = 2:dataLn
+                                            hisData = [hisData,cell2mat(fdata(1+qqq))];
+                                        end
+                                        varargout{1} = hisData;
                                     catch
                                         warning('read data from his file failed');
                                     end
@@ -259,23 +287,24 @@ function [data, varargout] = loadSettings(spath, fields, withHis)
 						case '#' % data
 							datafile = fullfile(spath,'_data',strtrim(fileinfo(ii).name(ln_field+2:end-4)));
 							if ~exist(datafile,'file')
-								throw(MException('QOS_loadSettings:invalidSettingsValue',...
+								throw(MException('QOS:loadSettings:invalidSettingsValue',...
 									sprintf('data for field ''%s'' not found in %s',...
                                     fields{1}, strrep(fullfile(spath,'_data'),'\','\\'))));
 							end
 							try
 								data = load(datafile); % a loadable data file
 							catch
-								throw(MException('QOS_loadSettings:invalidSettingsValue',...
+								throw(MException('QOS:loadSettings:invalidSettingsValue',...
 									sprintf('failed in loading data file %s for field ''%s''.',...
                                     strrep(datafile,'\','\\'), fields{1})));
-							end
+                            end
+                            return;
                     end
                 end
             end
         end
         if ii == numFiles && ~isempty(fields)
-            throw(MException('QOS_loadSettings:settingsNotFound',...
+            throw(MException('QOS:loadSettings:settingsNotFound',...
 				sprintf('no field ''%s'' found in settings path %s', fields{end}, strrep(spath,'\','\\'))));
         end
     end

@@ -25,6 +25,7 @@ classdef (Abstract = true) hardware < qes.qHandle & dynamicprops
             end
             obj = obj@qes.qHandle(name);
             obj.temperory = false;
+            qes.hwdriver.hardware.ListHwObj(obj);
         end
         function delete(obj)
             obj.temperory = true; % remove object from pool
@@ -119,5 +120,51 @@ classdef (Abstract = true) hardware < qes.qHandle & dynamicprops
                 obj.clientCount(idx) = max(0,obj.clientCount(idx)-1);
             end
 		end
+    end
+    methods(Static = true)
+        function varargout = ListHwObj(varargin)
+            persistent objlst % object pool
+            if isempty(objlst)
+                objlst = {};
+            end
+            if nargin == 0 % return all registered objects
+                varargout{1} = objlst;
+            elseif isa(varargin{1},'qes.hwdriver.hardware') % register a object
+                ii = 1;
+                NumObj = length(objlst);
+                while ii <= NumObj
+                    if ~isobject(objlst{ii}) || ~isvalid(objlst{ii})
+                        objlst(ii) = [];
+                        NumObj = NumObj - 1;
+                        ii = ii - 1;
+                    elseif objlst{ii} == varargin{1}
+                        break;
+                    end
+                    ii = ii +1;
+                end
+                if ii > NumObj
+                    objlst = [objlst, varargin(1)];
+                end
+            elseif ischar(varargin{1}) % return registered object of a specific name
+                NumObj = length(objlst);
+                ii = 1;
+                theObject = [];
+                while ii <= NumObj
+                    if ~isvalid(objlst{ii})
+                        objlst(ii) = [];
+                        NumObj = NumObj - 1;
+                        ii = ii - 1;
+                    elseif strcmp(objlst{ii}.name,varargin{1})
+                        theObject = objlst{ii};
+                        break;
+                    end
+                    ii = ii +1;
+                end
+                varargout{1} = theObject;
+            end
+        end
+        function hwObject = FindHwByName(name)
+            hwObject = qes.hwdriver.hardware.ListHwObj(name);
+        end
     end
 end

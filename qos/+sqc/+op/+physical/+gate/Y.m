@@ -4,14 +4,14 @@ function g = Y(qubit)
 % Copyright 2017 Yulin Wu, University of Science and Technology of China
 % mail4ywu@gmail.com/mail4ywu@icloud.com
 	import sqc.op.physical.gate.*
-	switch qubit.g_XY_typ
-		case 'pi' % implement Y
+	switch qubit.g_XY_impl
+		case 'pi' % implemented as Y
 			g = Y_(qubit);
-		case 'hPi' % implement by using Y2p*Y2p gates
+		case 'hPi' % implemented as Y2p*Y2p
 			g = Y2p(qubit)*Y2p(qubit);
             g.setGateClass('Y');
 		otherwise
-			error('unrecognized X gate type: %s, available x gate options are: pi and hPi',...
+			error('unrecognized XY gate type: %s, available XY gate type options are: pi and hPi',...
 				qubit.g_Z_typ);
 	
 	end

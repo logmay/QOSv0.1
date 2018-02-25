@@ -18,15 +18,15 @@ classdef qSettings < handle
              if nargin && isdir(root) && exist(root,'dir')
                  obj.root = root;
              else
-                 throw(MException('QOS_qSettings:InvalidInput',...
-					sprintf('settings root directory %s not found.', obj.root)));
+                 throw(MException('QOS:qSettings:invalidRootPath',...
+					sprintf('settings root path %s not found.', root)));
              end
          end
     end
     methods
         function set.user(obj,username)
             if isempty(dir(fullfile(obj.root,username)))
-                throw(MException('QOS_qSettings:InvalidInput',...
+                throw(MException('QOS:qSettings:invalidUser',...
 					sprintf('settings for user %s not found.', obj.user)));
             end
             obj.user = username;
@@ -34,20 +34,20 @@ classdef qSettings < handle
         end
         function set.session(obj,sessionname)
 			if isempty(obj.user)
-				throw(MException('QOS_qSettings:userNotSet',...
-                    'user not set, session can only be set after user is set.'));
+				throw(MException('QOS:qSettings:userNotSet',...
+                    'user not set.')); % session can only be set after user is set
 			end
 			if isempty(sessionname)
 				obj.session = [];
                 return;
 			end
             if isempty(dir(fullfile(obj.root,obj.user,sessionname)))
-                throw(MException('QOS_qSettings:InvalidInput',...
+                throw(MException('QOS:qSettings:sessionNotFound',...
 					sprintf('session %s not found for user %s .', sessionname, obj.user)));
             end
             data_path = qes.util.loadSettings(obj.root,{obj.user,sessionname,'data_path'});
             if ~isdir(data_path)
-                throw(MException('QOS_qSettings:changeSessionError',...
+                throw(MException('QOS:qSettings:dataPathError',...
 					sprintf('session %s has no data_path setting or not a valid path.', sessionname)));
             end
             if isempty(data_path)
@@ -62,7 +62,7 @@ classdef qSettings < handle
         end
 		function set.hardware(obj,hwGroup)
 			if isempty(dir(fullfile(obj.root,'hardware',hwGroup)))
-                throw(MException('QOS_qSettings:InvalidInput',...
+                throw(MException('QOS:qSettings:InvalidInput',...
 					sprintf('hardware group %s not found.', hwGroup)));
             end
             old_hwGroup = qes.util.loadSettings(obj.root,{'hardware','selected'});
@@ -111,19 +111,19 @@ classdef qSettings < handle
             % loads settings in selected session
             % ommit the fields argument to load all
             if isempty(obj.user)
-                throw(MException('QOS_qSettings:userNotSet','user not set.'));
+                throw(MException('QOS:qSettings:userNotSet','user not set.'));
             end
             fieldNameGiven = true;
             if nargin < 2
                 fieldNameGiven = false;
                 fields = qes.util.loadSettings(obj.root,{obj.user,obj.session,'selected'});
                 if ~exist(fullfile(obj.root,obj.user,obj.session,'shared'),'file')
-                    throw(MException('QOS_qSettings:publicSettingsNotExist',...
+                    throw(MException('QOS:qSettings:publicSettingsNotExist',...
 						'shared settings not found, each session must have a shared settings group.'));
                 end
 				for ii = 1:numel(fields)
 					if ~exist(fullfile(obj.root,obj.user,obj.session,fields{ii}),'file')
-						throw(MException('QOS_qSettings:nonExistentQObjects',...
+						throw(MException('QOS:qSettings:nonExistentQObjects',...
 							'selected qobject %s dose not exist.', fields{ii}));
 					end
 				end
@@ -157,7 +157,7 @@ classdef qSettings < handle
         function [time,data] = loadSSettingsHis(obj,fields)
             % loads settings in selected session with history data
             if isempty(obj.user)
-                throw(MException('QOS_qSettings:userNotSet','user not set.'));
+                throw(MException('QOS:qSettings:userNotSet','user not set.'));
             end
             if nargin < 2
                 error('not enough arguments');
@@ -173,7 +173,7 @@ classdef qSettings < handle
             % saves settings value of a specific fied in selected session
             if ~iscell(field)
                 if ~ischar(field)
-                    throw(MException('QOS_qSettings:InvalidInput','invalid field name.'));
+                    throw(MException('QOS:qSettings:InvalidInput','invalid field name.'));
                 else
                     field = {field};
                 end
@@ -188,7 +188,7 @@ classdef qSettings < handle
             end
             selected_hw_settings_group = qes.util.loadSettings(obj.root,{'hardware','selected'});
             if isempty(dir(fullfile(obj.root,'hardware',selected_hw_settings_group)))
-                throw(MException('QOS_qSettings:settingsNotFound',...
+                throw(MException('QOS:qSettings:settingsNotFound',...
 					sprintf('hardware settings group %s is selected, but no such settings group is found.',...
 					selected_hw_settings_group)));
             end
@@ -201,8 +201,8 @@ classdef qSettings < handle
         function saveHwSettings(obj,field,value)
             % saves hardware settings specified by fields
             selected_hw_settings_group = qes.util.loadSettings(obj.root,{'hardware','selected'});
-            if isempty(dir(fullfile(obj.root,'hardware',selected_hw_settings_group)));
-                throw(MException('QOS_qSettings:settingsNotFound',... 
+            if isempty(dir(fullfile(obj.root,'hardware',selected_hw_settings_group)))
+                throw(MException('QOS:qSettings:settingsNotFound',... 
 					sprintf('hardware settings group %s is selected, but no such settings group is found.',...
 					selected_hw_settings_group)));
             end
@@ -211,8 +211,8 @@ classdef qSettings < handle
         function CreateHw(obj)
             %
             selected_hw_settings_group = qes.util.loadSettings(obj.root,{'hardware','selected'});
-            if isempty(dir(fullfile(obj.root,'hardware',selected_hw_settings_group)));
-                throw(MException('QOS_qSettings:settingsNotFound',...
+            if isempty(dir(fullfile(obj.root,'hardware',selected_hw_settings_group)))
+                throw(MException('QOS:qSettings:settingsNotFound',...
 					sprintf('hardware settings group %s is selected, but no such settings group is found.',...
 					selected_hw_settings_group)));
             end
@@ -220,20 +220,12 @@ classdef qSettings < handle
             if ~iscell(selected_hw) % parseJson returns the elements itself in case of single element list
                 selected_hw = {selected_hw};
             end
-			err = false;
             for ii = 1:length(selected_hw)
-                try
-                    hw_settings = qes.util.loadSettings(obj.root,{'hardware',selected_hw_settings_group,selected_hw{ii}});
-                    hw_settings.name = selected_hw{ii};
-                    [~] = qes.util.hwCreator(hw_settings);
-                catch ME
-					err = true;
-                    disp(getReport(ME));
-                end
+                hw_settings = qes.util.loadSettings(obj.root,{'hardware',selected_hw_settings_group,selected_hw{ii}});
+                hw_settings.name = selected_hw{ii};
+                [~] = qes.util.hwCreator(hw_settings);
             end
-			if ~err
-				obj.hwCreated = true;
-			end
+			obj.hwCreated = true;
         end
         function DeleteHw(obj)
             %
@@ -256,8 +248,10 @@ classdef qSettings < handle
                 obj = settingsobj;
                 return;
             elseif nargin == 0
-				throw(MException('QOS_qSettings:notEnoughInputArguments',...
-					'settings object not created, the settings root directory must be given.'));
+                logger = qes.util.log4m.getLogger();
+                logger.info('qCloud.startup','start');
+				throw(MException('QOS:qSettings:notEnoughInputArguments',...
+					'settings object not created, the settings root path must be given.'));
 			end
             settingsobj = qes.qSettings(root);
             obj = settingsobj;

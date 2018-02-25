@@ -1,10 +1,7 @@
-% data_taking.public.xmon.tuneup.czDynamicPhase('controlQ',_c&o_,'targetQ',_c&o_,'dynamicPhaseQ',[_c&o_],...
-%       'numCZs',<_i_>,'PhaseTolerance',<_f_>,'numIter',<_i_>...
-%       'gui',<_b_>,'save',<_b_>)
-function varargout = czDynamicPhase(varargin)
+function varargout = czDynamicPhase_parallel(varargin)
 % <_o_> = czDynamicPhase('controlQ',_c&o_,'targetQ',_c&o_,'dynamicPhaseQ',[_c&o_],...
 %       'numCZs',<_i_>,'PhaseTolerance',<_f_>,'numIter',<_i_>...
-%       'notes',<_c_>,'gui',<_b_>,'save',<_b_>)
+%       'notes',<_c_>,'gui',<_b_>,'save',<_b_>,'logger',<_o_>)
 % _f_: float
 % _i_: integer
 % _c_: char or char string
@@ -62,7 +59,7 @@ function varargout = czDynamicPhase(varargin)
         x = 1:args.numCZs;
         data = nan(args.numCZs,numQs);
         for ii = 1:args.numCZs
-            disp(['Iter: ', num2str(count), 'num CZ: ', num2str(ii),' of ', num2str(args.numCZs)]);
+            disp(['Iter ', num2str(count), ': ', num2str(ii),' of ', num2str(args.numCZs)]);
             proc = Y{1};
             for jj = 2:numQs
                 proc = proc.*Y{jj};
@@ -77,14 +74,17 @@ function varargout = czDynamicPhase(varargin)
         for jj = 1:numQs
             p = polyfit(x,data(:,jj),1);
             if args.gui
-                hf = qes.ui.qosFigure(sprintf('ACZ dynamic phase | %s,%s,%s', qc.name, qt.name, dynamicPhaseQs{jj}.name),true);
+                hf = qes.ui.qosFigure(sprintf('ACZ dynamic phase | %s,%s,%s',...
+                    qc.name, qt.name, dynamicPhaseQs{jj}.name),false);
                 ax = axes('parent',hf);
-                plot(ax,x,data(:,jj),'s',x,polyval(p,x),'-r');
+                plot(ax,x,data(:,jj),'s',[0;x],polyval(p,[0;x]),'-r');
                 xlabel(ax,'number of CZs');
                 ylabel(ax,[dynamicPhaseQs{jj}.name,' phase(rad)']);
                 legend(ax,{'data','linear fit'});
                 title([dynamicPhaseQs{jj}.name, ' dynamic phase correction: ', num2str(p(1),'%0.4f')]);
                 drawnow;
+            else
+                hf = [];
             end
             dp = czs.dynamicPhases(qdInd(jj)) + p(1);
             if dp > pi
@@ -95,7 +95,15 @@ function varargout = czDynamicPhase(varargin)
             czs.dynamicPhases(qdInd(jj)) = dp; % update for the next interation
         end
     end
-
+    if ischar(args.save)
+        args.save = false;
+        choice  = qes.ui.questdlg_timer(600,'Update settings?','Save options','Yes','No','Yes');
+%         choice  = questdlg('Update settings?','Save options',...
+%                 'Yes','No','No');
+        if ~isempty(choice) && strcmp(choice, 'Yes')
+            args.save = true;
+        end
+    end
     if args.save
         QS = qes.qSettings.GetInstance();
         QS.saveSSettings({'shared','g_cz',czs.key,'dynamicPhases'},czs.dynamicPhases);

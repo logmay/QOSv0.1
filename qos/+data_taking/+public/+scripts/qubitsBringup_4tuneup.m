@@ -3,15 +3,13 @@
 q = 'q1';
 
 tuneup.iq2prob_01('qubits',q,'numSamples',1e4,'gui',true,'save','askMe');
-tuneup.optReadoutFreq('qubit',q,'gui',true,'save','askMe');
+% tuneup.optReadoutFreq('qubit',q,'gui',true,'save','askMe');
+% tuneup.iq2prob_01('qubits',q,'numSamples',1e4,'gui',true,'save','askMe');
+tuneup.correctf01byPhase('qubits',q,'delayTime',1e-6,'gui','true','save','askMe');
+tuneup.iq2prob_01('qubits',q,'numSamples',1e4,'gui',true,'save','askMe');
+tuneup.xyGateAmpTuner('qubit',q,'gateTyp','X/2','AE',true,'AENumPi',31,'gui',true,'save','askMe');
 tuneup.iq2prob_01('qubits',q,'numSamples',1e4,'gui',true,'save','askMe');
 
-% tuneup.correctf01bySpc('qubit',q,'gui',true,'save','askMe'); % measure f01 by spectrum
-% tuneup.correctf01byRamsey('qubit',q,'robust',true,'gui',true,'save','askMe');
-
-tuneup.xyGateAmpTuner('qubit',q,'gateTyp','X/2','AE',true,'gui',true,'save','askMe');
-
-tuneup.correctf01byPhase('qubits',q,'delayTime',1e-6,'gui','true','save','askMe');
 %% fully auto callibration
 qubits = {'q9','q7','q5','q6','q8'};%'q9','q7',,'q8'
 for ii = 1:numel(qubits)
@@ -38,8 +36,8 @@ tuneup.APE('qubit','q7',...
       'gui',true,'save',true);
 %%
 setQSettings('r_avg',1500);
-tuneup.DRAGAlphaAPE('qubit','q2','alpha',[-2:0.05:3],...
-    'phase',0,'numI',25,...
+tuneup.DRAGAlphaAPE('qubit','q11','alpha',[-1:0.05:1.5],...
+    'phase',0,'numI',10,...
     'gui',true,'save',true);
 %%
 photonNumberCal('qubit','q1',...
@@ -64,12 +62,12 @@ zPulseRipple('qubit','q7',...
     s.bandWidht = 0.25;
      
 %     q = 'q1';
-%     s.r = [0.025,-0.019,0.015]; 
+%     s.r = [0.025,-0.019,0.012]; 
 %     s.td = [900,500,250]; 
     
-    q = 'q1';
-    s.r = [0.017]; 
-    s.td = [1000]; 
+%     q = 'q1';
+%     s.r = [0.017];
+%     s.td = [1000];
     
 % %     q = 'q2';
 % %     s.r = [0.013]; 
@@ -80,29 +78,44 @@ zPulseRipple('qubit','q7',...
 %     s.td = [833, 400, 200]; 
 
     
-%     q = 'q3';
-%     s.r = [0.035,-0.017,-0.013,0.023]; 
-%     s.td = [900,400,200,100]; 
+% %     q = 'q3';
+% %     s.r = [0.035,-0.017,-0.013,0.023]; 
+% %     s.td = [900,400,200,100]; 
+    
+%         q = 'q3';
+%     s.r = [0.021]; 
+%     s.td = [900]; 
 
 %     q = 'q4';
-%     s.r = [0.014]; 
-%     s.td = [634]; 
+%     s.r = [0.0135,-0.005,0.017]; 
+%     s.td = [900,300,80]; 
+
 %     q = 'q5';
-%     s.r = [0.017]; 
-%     s.td = [664]; 
+%     s.r = [0.0125,0.01]; 
+%     s.td = [900,70]; 
 %     q = 'q6';
-%     s.r = [0.035]; 
-%     s.td = [554]; 
+%     s.r = [0.0205,0.012]; 
+%     s.td = [900,100]; 
+
+%     q = 'q7';
+%     s.r = [0.0093,0.008]; 
+%     s.td = [900,80]; 
+
 %       q = 'q8';
-%       s.r = [0.019]; 
-%       s.td = [570]; 
+%       s.r = [0.011,0.007]; 
+%       s.td = [900,100]; 
+
+%     q = 'q9';
+%     s.r = [0.011,-0.0025,0.003]; 
+%     s.td = [700,400,70]; 
+
 %       q = 'q10';
-%       s.r = [0.025]; 
-%       s.td = [870]; 
+%       s.r = [0.013,0.007]; 
+%       s.td = [900,100]; 
       
-%       q = 'q11';
-%       s.r = [0.021]; 
-%       s.td = [954]; 
+      q = 'q11';
+      s.r = [0.021,-0.012,0.009,0.005]; 
+      s.td = [900,400,150,60]; 
 
     xfrFunc = qes.util.xfrFuncBuilder(s);
     xfrFunc_inv = xfrFunc.inv();
@@ -115,7 +128,6 @@ zPulseRipple('qubit','q7',...
 %     plot(fi, fsamples(1:2:end),'-r');
 %     fsamples = xfrFunc.samples_t(fi);
 %     hold on; plot(fi, fsamples(1:2:end),'-g');
-
 
 delayTime = [0:50:2000];
 setQSettings('r_avg',3000);

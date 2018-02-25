@@ -89,11 +89,14 @@ function varargout = optReadoutFreq(varargin)
         set(ax,'PlotBoxAspectRatio',[1,1,1]);
         pbaspect(ax,[1,1,1]);
         drawnow;
-    end
+    else
+            hf = [];
+        end
     if ischar(args.save)
         args.save = false;
-        choice  = questdlg('Update settings?','Save options',...
-                'Yes','No','No');
+        choice  = qes.ui.questdlg_timer(600,'Update settings?','Save options','Yes','No','Yes');
+%         choice  = questdlg('Update settings?','Save options',...
+%                 'Yes','No','No');
         if ~isempty(choice) && strcmp(choice, 'Yes')
             args.save = true;
         end

@@ -1,11 +1,11 @@
 classdef pushover < handle
-    % pushover sends realtime push notifications to IOS or Android devices.
-    % Notifications are sent from an application(any kind of program) by
-    % using class pushover via a web api to a client(an app installed on
-    % an IOS or Android device). To start, follow these steps:
-    % step 1, install app pushover on the device to receive push
+    % pushover sends push notifications to IOS or Android devices.
+    % Notifications are sent from an application(any kind of program) to
+    % a client(an app installed on an IOS or Android device).
+    % To start, follow these steps:
+    % step 1, install the app pushover on the device to receive push
     % notifications and register to get a user key, pushover is available
-    % on App Store and Google Play.
+    % on Apple App Store and Google Play.
     % step2, obtain an api key for you specific application from
     % https://pushover.net.
     % step3, now you are ready to use pushover, for example:
@@ -15,7 +15,6 @@ classdef pushover < handle
     % notifier.title = 'A Test';
     % notifier.message = 'Hi there, ''pushover'' is now working.';
     % notifier.Push;
-    % now whach your device.
     
 % Copyright 2015 Yulin Wu, Institute of Physics, Chinese  Academy of Sciences
 % mail4ywu@gmail.com/mail4ywu@icloud.com
@@ -27,7 +26,7 @@ classdef pushover < handle
         % notifications.
         receiver
         % device of the receiver, if not specified, the notification is
-        % pushed to all enabled devices or the receiver.
+        % pushed to all enabled devices or receivers.
         % character string, eg, 'My_iPhone'. optional
         device@char
         title % title of notification, optional
@@ -181,7 +180,7 @@ classdef pushover < handle
                 error('pushover:Failed','receiver not set.');
             end
             Post = obj.PostContents();
-            [str,status]=urlread(obj.apiurl,'post',Post);
+            [str,status]=urlread(obj.apiurl,'post',Post,'Timeout',10);
 %             if status==0
 %                 warning('pushover:Failed',['Post failed: ', str]);
 %             end
@@ -198,7 +197,7 @@ classdef pushover < handle
             if isempty(obj.apptoken)
                 return;
             end
-            [JStr,status]=urlread([obj.soundurl,'?token=',obj.apptoken]);
+            [JStr,status]=urlread([obj.soundurl,'?token=',obj.apptoken],'Timeout',10);
             if status==1
                 data=pushover.ParseJson(JStr);
                 if isempty(data{1})

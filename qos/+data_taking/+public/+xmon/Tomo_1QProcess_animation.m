@@ -34,14 +34,14 @@ function varargout = Tomo_1QProcess_animation(varargin)
     isXhPi = false;
     switch args.process
         case {'X'}
-            if strcmp(q.g_XY_typ,'pi')
+            if strcmp(q.g_XY_impl,'pi')
                 p = gate.X(q);
             else
                 p = gate.X2p(q);
                 isXhPi = true;
             end
         case {'Y'}
-            if strcmp(q.g_XY_typ,'pi')
+            if strcmp(q.g_XY_impl,'pi')
                 p = gate.Y(q);
             else
                 p = gate.Y2p(q);
@@ -76,7 +76,7 @@ function varargout = Tomo_1QProcess_animation(varargin)
         Y4p = gate.Y4p(q);
         amps1 = linspace(0,Y4p.amp,args.numPts/4);
         Y4p.amp = 0;
-        if strcmp(q.g_XY_typ,'pi')
+        if strcmp(q.g_XY_impl,'pi')
             X = gate.X(q);
             amps2 = linspace(0,X.amp,args.numPts/2);
             X.amp = 0;
@@ -110,7 +110,7 @@ function varargout = Tomo_1QProcess_animation(varargin)
             if ii == args.numPts
                 Y4p.amp = amps3(end);
             end
-            if strcmp(q.g_XY_typ,'pi')
+            if strcmp(q.g_XY_impl,'pi')
                 p = Y4m*X*Y4p;
             else
                 p = Y4m*X*X*Y4p;

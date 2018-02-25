@@ -1,4 +1,4 @@
-% data_taking.public.scripts.temp.GHZ_5Q()
+% data_taking.public.scripts.temp.GHZ_8Q()
 function GHZ_8Q()
     import sqc.measure.*
     import sqc.util.qName2Obj

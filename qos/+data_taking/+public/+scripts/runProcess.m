@@ -15,6 +15,26 @@ R = resonatorReadout(q);
 R.delay = proc.length;
 proc.Run();
 data = R()
+%%
+q = qName2Obj('q5');
+g1 = gate.X(q);
+proc = g1;
+R = resonatorReadout(q);
+R.delay = proc.length;
+proc.Run();
+nPts = 200;
+n = 1:nPts;
+x = nan(1,nPts);
+y = nan(1,nPts);
+figure();
+for ii = 1:nPts
+    proc.Run();
+    data_ = R();
+    y(ii) = data_(2);
+    x(ii) = now;
+    plot((x(2:end)-x(1))*24*60,y(2:end));
+    drawnow;
+end
 %% validate Z_arbPhase
 q = qName2Obj('q1');
 g1 = gate.Y2m(q);
@@ -40,6 +60,24 @@ R = phase(q2);
 R.setProcess(proc);
 phaseMeasured = R();
 disp(['phase measured: ', num2str(phaseMeasured)]);
+%% mw cross talk
+q1 = qName2Obj('q3');
+q2 = qName2Obj('q9');
+g1 = gate.X(q1);
+R = resonatorReadout(q2);
+n = 0:10;
+data = zeros(1,11);
+figure();
+for ii = 1:11
+    p = g1^n(ii);
+    R.delay = p.length;
+    p.Run();
+    data_ = R();
+    data(ii) = data_(1);
+    plot(data);
+    drawnow;
+end
+
 %% CZ Z Pulse Trailing PHASE
 q1 = qName2Obj('q3');
 q2 = qName2Obj('q2');

@@ -44,6 +44,9 @@ classdef resonatorReadout < qes.measurement.prob
         
         readoutLength
     end
+    properties (SetAccess = private, GetAccess = private)
+        sbFrequency
+    end
     methods
         function obj = resonatorReadout(qubits,jointReadout, iqAsExtraData)
 			if nargin < 2
@@ -143,8 +146,11 @@ classdef resonatorReadout < qes.measurement.prob
 					'can not digitize I and Q with the same channel.'));
             end
             
-            ad = qes.qHandle.FindByClassProp('qes.hwdriver.hardware','name',ad_i_names);
-            da = qes.qHandle.FindByClassProp('qes.hwdriver.hardware','name',da_i_names);
+            ad = qes.hwdriver.hardware.FindHwByName(ad_i_names);
+            da = qes.hwdriver.hardware.FindHwByName(da_i_names);
+            
+%             ad = qes.qHandle.FindByClassProp('qes.hwdriver.hardware','name',ad_i_names);
+%             da = qes.qHandle.FindByClassProp('qes.hwdriver.hardware','name',da_i_names);
 			
 			ad_i_chnl_ = ad.GetChnl(ad_i_chnl_);
 			ad_q_chnl_ = ad.GetChnl(ad_q_chnl_);
@@ -181,13 +187,13 @@ classdef resonatorReadout < qes.measurement.prob
             end
             iq_obj.freq = demod_freq;
 			
-			if qubits{1}.r_correctDecay
-				T1 = zeros(1,num_qubits);
-				for ii = 1:num_qubits
-					T1(ii) = qubits{ii}.T1;
-				end
-				iq_obj.T1 = T1;
-			end
+% 			if qubits{1}.r_correctDecay
+% 				T1 = zeros(1,num_qubits);
+% 				for ii = 1:num_qubits
+% 					T1(ii) = qubits{ii}.T1;
+% 				end
+% 				iq_obj.T1 = T1;
+% 			end
 			
 %             iq_obj.startidx = qubits{1}.r_truncatePts(1)+1;
 %             iq_obj.endidx = ad.recordLength-qubits{1}.r_truncatePts(2);
@@ -208,7 +214,8 @@ classdef resonatorReadout < qes.measurement.prob
             obj.adSamplingRate = ad_i_chnl_.samplingRate;
             obj.daSamplingRate = da_i_chnl_.samplingRate;
 			
-			uSrc = qes.qHandle.FindByClassProp('qes.hwdriver.hardware','name',qubits{1}.channels.r_mw.instru);
+            uSrc = qes.hwdriver.hardware.FindHwByName(qubits{1}.channels.r_mw.instru);
+% 			uSrc = qes.qHandle.FindByClassProp('qes.hwdriver.hardware','name',qubits{1}.channels.r_mw.instru);
             if isempty(uSrc)
                 throw(MException('QOS_resonatorReadout:hwNotFound',...
                     '%s not found in hardware pool, make sure it is selected in hardware settings and seccessfully created.',...
@@ -367,8 +374,8 @@ classdef resonatorReadout < qes.measurement.prob
             
 % 			obj.r_wv.awg.SetTrigOutDelay(obj.r_wv.awgchnl,obj.delay);
 
-            obj.da_i_chnl.SendWave(obj.r_wv,true);
-            obj.da_q_chnl.SendWave(obj.r_wv,false);
+            obj.da_i_chnl.SendWave(obj.r_wv,true,obj.mw_src_frequency,obj.mw_src_power,obj.sbFrequency);
+            obj.da_q_chnl.SendWave(obj.r_wv,false,obj.mw_src_frequency,obj.mw_src_power,obj.sbFrequency);
             
             if ~isempty(obj.jpaRunner)
                 obj.jpaRunner.Run();
@@ -411,7 +418,7 @@ classdef resonatorReadout < qes.measurement.prob
                     df = (obj.allReadoutQubits{ii}.r_freq - obj.allReadoutQubits{ii}.r_fc)/obj.da.samplingRate;
                     wv_{ii}.phase = 2*pi*df*obj.startWv.length;
                 end
-                
+                obj.sbFrequency = carrierFrequency;
             end
             s = qes.waveform.sequence(wv_{1});
             for ii = 2:num_qubits

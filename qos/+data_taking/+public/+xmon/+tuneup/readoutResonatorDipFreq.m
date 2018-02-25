@@ -73,12 +73,15 @@ function varargout = readoutResonatorDipFreq(varargin)
         legend(ax,{'data',sprintf('f01:%0.5fGHz',f01/1e9)});
         set(ax,'YLim',ylim);
         drawnow;
-    end
+    else
+            hf = [];
+        end
     
     if ischar(args.save)
         args.save = false;
-        choice  = questdlg('Update settings?','Save options',...
-                'Yes','No','No');
+        choice  = qes.ui.questdlg_timer(600,'Update settings?','Save options','Yes','No','Yes');
+%         choice  = questdlg('Update settings?','Save options',...
+%                 'Yes','No','No');
         if ~isempty(choice) && strcmp(choice, 'Yes')
             args.save = true;
         end

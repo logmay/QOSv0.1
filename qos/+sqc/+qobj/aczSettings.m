@@ -4,6 +4,7 @@ classdef aczSettings < handle
         typ
 		aczLn
 		amp
+        ampInDetune@logical scalar = false;
 		thf
 		thi
 		lam2

@@ -4,10 +4,10 @@ function g = X(qubit)
 % Copyright 2017 Yulin Wu, University of Science and Technology of China
 % mail4ywu@gmail.com/mail4ywu@icloud.com
 	import sqc.op.physical.gate.*
-	switch qubit.g_XY_typ
-		case {'', 'pi'} % implement X
+	switch qubit.g_XY_impl
+		case {'', 'pi'} % implemented as X
 			g = X_(qubit);
-		case 'hPi' % implement by using X2p*X2p gates
+		case 'hPi' % implemented as X2p*X2p
 			g = X2p(qubit)*X2p(qubit);
             g.setGateClass('X');
 		otherwise

@@ -22,7 +22,7 @@ function varargout = randBenchMarking(varargin)
     import sqc.*
     import sqc.op.physical.*
 
-    args = util.processArgs(varargin,{'state','|0>','reps',1,'gui',false,'notes','','detuning',0,'save',true});
+    args = util.processArgs(varargin,{'doCalibration',false,'state','|0>','reps',1,'gui',false,'notes','','detuning',0,'save',true});
     if isempty(args.qubit2)
         q = data_taking.public.util.getQubits(args,{'qubit1'});
         figTitle = q.name;
@@ -84,6 +84,17 @@ function varargout = randBenchMarking(varargin)
     sessionSettings = QS.loadSSettings;
     hwSettings = QS.loadHwSettings;
     for ii = 1:N
+%         if args.doCalibration
+%             q_ = q;
+%             if ~iscell(q_)
+%                 q_ = {q_};
+%             end
+%             for cc = 1:numel(q_)
+%                 data_taking.public.xmon.tuneup.iq2prob_01(...
+%                     'qubits',q_{cc},'numSamples',1e4,'gui',false,'save',true);
+%             end
+%         end
+
         R = measure.randBenchMarking(q,p,args.numGates(ii),args.numReps);
         data = R();
         Pref(:,ii) = data(:,1);

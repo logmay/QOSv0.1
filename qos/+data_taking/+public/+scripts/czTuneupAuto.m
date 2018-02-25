@@ -28,7 +28,7 @@ for ii = 1:numel(allQs)
     tuneup.iq2prob_01('qubit',q,'numSamples',5e4,'gui',true,'save',true);
 end
 
-setQSettings('r_avg',5000);
+setQSettings('r_avg',1500);
 for ii = 1:numel(czQSets)
     czQSet = czQSets{ii};
     tuneup.czAmplitude('controlQ',czQSet{1},'targetQ',czQSet{2},'gui',true);

@@ -782,7 +782,111 @@ classdef gateOptimizer < qes.measurement.measurement
 			end
         end
         
-        function czOpt(qubits,numGates, rAvg, maxFEval)
+        function czOptLeakage(qubits,numGates, rAvg, maxFEval)
+            if nargin < 5
+                maxFEval = 100;
+            end
+			
+			import sqc.op.physical.*
+			if ~iscell(qubits) || numel(qubits) ~= 2
+				error('qubits not a cell of 2.');
+			end
+			for ii = 1:numel(qubits)
+				if ischar(qubits{ii})
+					qubits{ii} = sqc.util.qName2Obj(qubits{ii});
+                end
+                qubits{ii}.r_avg = rAvg;
+            end
+
+			aczSettingsKey = sprintf('%s_%s',qubits{1}.name,qubits{2}.name);
+			QS = qes.qSettings.GetInstance();
+			scz = QS.loadSSettings({'shared','g_cz',aczSettingsKey});
+			aczSettings = sqc.qobj.aczSettings();
+			fn = fieldnames(scz);
+			for ii = 1:numel(fn)
+				aczSettings.(fn{ii}) = scz.(fn{ii});
+			end
+			qubits{1}.aczSettings = aczSettings;
+			
+			% R = sqc.measure.randBenchMarking4Opt(qubits,numGates,10);
+            R = sqc.measure.randBenchMarkingFS(qubits,numGates,numShots);
+			
+			phase1 = qes.expParam(aczSettings,'dynamicPhase(1)');
+			phase1.offset = aczSettings.dynamicPhase(1);
+			
+			phase2 = qes.expParam(aczSettings,'dynamicPhase(2)');
+			phase2.offset = aczSettings.dynamicPhase(2);
+            
+            amplitude = qes.expParam(aczSettings,'amp');
+			amplitude.offset = aczSettings.amp;
+            
+            thf = qes.expParam(aczSettings,'thf');
+			thf.offset = aczSettings.thf;
+            
+            thi = qes.expParam(aczSettings,'thi');
+			thi.offset = aczSettings.thi;
+            
+            lam2 = qes.expParam(aczSettings,'lam2');
+			lam2.offset = aczSettings.lam2;
+            
+            lam3 = qes.expParam(aczSettings,'lam3');
+			lam3.offset = aczSettings.lam3;
+            
+			f = qes.expFcn([phase1,phase2,amplitude,thf,thi,lam2,lam3],R);
+
+            x0 = [-0.1,-0.1,-0.02*aczSettings.amp,-0.2,-0.2,-0.2,-0.2;...
+                    -0.1,-0.1,-0.02*aczSettings.amp,-0.2,-0.2,-0.2,0.2;...
+                    -0.1,-0.1,-0.02*aczSettings.amp,-0.2,-0.2,0.2,0.2;...
+                    -0.1,-0.1,-0.02*aczSettings.amp,-0.2,0.2,0.2,0.2;...
+                    -0.1,-0.1,-0.02*aczSettings.amp,0.2,0.2,0.2,0.2;...
+                    -0.1,-0.1,0.02*aczSettings.amp,0.2,0.2,0.2,0.2;...
+                    -0.1,0.1,0.02*aczSettings.amp,0.2,0.2,0.2,0.2;...
+                    0.1,0.1,0.02*aczSettings.amp,0.2,0.2,0.2,0.2];
+            
+            tolX = [pi/5e4,pi/5e4,1,1e-4,1e-4,1e-4,1e-4];
+            tolY = [1e-4];
+            
+            h = qes.ui.qosFigure(sprintf('Gate Optimizer | %s%s CZ', qubits{1}.name, qubits{2}.name),false);
+            axs(1) = subplot(4,2,8,'Parent',h);
+            axs(2) = subplot(4,2,7);
+            axs(3) = subplot(4,2,6);
+            axs(4) = subplot(4,2,5);
+            axs(5) = subplot(4,2,4);
+            axs(6) = subplot(4,2,3);
+            axs(7) = subplot(4,2,2);
+            axs(8) = subplot(4,2,1);
+            [optParams, x_trace, y_trace, n_feval] = qes.util.NelderMead(f.fcn, x0, tolX, tolY, maxFEval, axs);
+            fval = y_trace(end);
+            fval0 = y_trace(1);
+
+			if fval > fval0
+               error('Optimization failed: final fidelity worse than initial fidelity, registry not updated.');
+            end
+            % note: aczSettings is a handle class
+            aczSettings.dynamicPhase = aczSettings.dynamicPhase - 2*pi*floor(aczSettings.dynamicPhase/(2*pi));
+			QS.saveSSettings({'shared','g_cz',aczSettingsKey,'dynamicPhase'},...
+								aczSettings.dynamicPhase);
+            QS.saveSSettings({'shared','g_cz',aczSettingsKey,'amp'},aczSettings.amp);
+            QS.saveSSettings({'shared','g_cz',aczSettingsKey,'thf'},aczSettings.thf);
+            QS.saveSSettings({'shared','g_cz',aczSettingsKey,'thi'},aczSettings.thi);
+            QS.saveSSettings({'shared','g_cz',aczSettingsKey,'lam2'},aczSettings.lam2);
+            QS.saveSSettings({'shared','g_cz',aczSettingsKey,'lam3'},aczSettings.lam3);
+
+			dataPath = QS.loadSSettings('data_path');
+			TimeStamp = datestr(now,'_yymmddTHHMMSS_');
+			dataFileName = ['CZGateOpt',TimeStamp,'.mat'];
+			figFileName = ['CZGateOpt',TimeStamp,'.fig'];
+			sessionSettings = QS.loadSSettings;
+			hwSettings = QS.loadHwSettings;
+			notes = 'CZGateOpt';
+            save(fullfile(dataPath,dataFileName),'optParams','x_trace','y_trace','sessionSettings','hwSettings','notes');
+			try
+				saveas(h,fullfile(dataPath,figFileName));
+			catch
+			end
+        end
+		
+		function czOpt(qubits,numGates, rAvg, maxFEval)
             if nargin < 5
                 maxFEval = 100;
             end

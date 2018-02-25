@@ -75,7 +75,7 @@ td = td/2/1000;
 wci = wci/2/1000;
 %%
 bias2f01 = @(x)x*1e9; % in case of no bias2f01 transformation needed.
-% bias2f01 = @(x) polyval([-0.17523,1.63354e4,4.42718e9],x);
+bias2f01 = @(x) polyval([-1.09978,-9.2548e3,5.08577e9],x);
 
 figure();
 h = pcolor(bias2f01(bias)/1e9,time,z'); set(h,'EdgeColor','none')

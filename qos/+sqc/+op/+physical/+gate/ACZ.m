@@ -17,6 +17,13 @@ classdef ACZ < sqc.op.physical.operator
         detuneFreq
         detuneLonger
 		padLn
+        
+        ampInDetune
+        maxF01
+        k
+    end
+    properties (SetAccess = private, GetAccess = private)
+        
     end
     methods
         function obj = ACZ(q1, q2)
@@ -52,15 +59,40 @@ classdef ACZ < sqc.op.physical.operator
             obj.lam2 = czs.lam2;
             obj.lam3 = czs.lam3;
             obj.padLn = czs.padLn;
-            
+            if numel(czs.dynamicPhases) ~= numQs
+                throw(MException('QOS_ACZ:invalidACZSettings',...
+                            'number of dynamic phases not matching the number of qubits'));
+            end
             obj.phaseShift = czs.dynamicPhases;
             obj.detuneFreq = czs.detuneFreq;
             obj.detuneLonger = czs.detuneLonger;
             
+            obj.ampInDetune = czs.ampInDetune;
+            if obj.ampInDetune
+                zpa2f01 = qubits_{1}.zpls_amp2f01;
+                maxF01 = polyval(zpa2f01,roots(polyder(zpa2f01)));
+                if qubits_{1}.f01 > maxF01
+                    if obj.f01 - maxF01 > 3e6
+                        throw(MException('QOS_ACZ:invalidzplsamp2f01',...
+                            sprintf('f01 greater than maximum of zpls_amp2f01(>3Mz) for qubit %s.', q.name)));
+                    else
+                        maxF01 = qubits_{1}.f01;
+                    end
+                end
+                obj.maxF01 = maxF01;
+                obj.k = 1/sqrt(-zpa2f01(1));
+                xShift = sqc.util.zpa2f01XShift(qubits_{1});
+                if xShift > 0
+                    obj.k = -obj.k;
+                end
+            else
+                obj.maxF01 = qubits_{1}.f01;
+                obj.k = 0;
+            end
+
             obj.aczLn = czs.aczLn; % must be after the setting of meetUpLonger, padLn and detuneLonger
             obj.gateClass = 'CZ';
-            
-            
+
         end
         function set.aczLn(obj,val)
             obj.aczLn = val;
@@ -69,7 +101,8 @@ classdef ACZ < sqc.op.physical.operator
     end
 	methods (Hidden = true)
         function GenWave(obj)
-            aczWv = qes.waveform.acz(obj.aczLn, obj.amp, obj.thf, obj.thi, obj.lam2, obj.lam3);
+            aczWv = qes.waveform.acz(obj.aczLn, obj.amp, obj.thf, obj.thi, obj.lam2, obj.lam3,...
+                obj.ampInDetune, obj.qubits{1}.f01, obj.maxF01, obj.k);
             maxDetuneLonger = max(obj.detuneLonger);
             padWv1 = qes.waveform.spacer(obj.padLn(1)+maxDetuneLonger);
             padWv2 = qes.waveform.spacer(obj.padLn(2)+maxDetuneLonger);

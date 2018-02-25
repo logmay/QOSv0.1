@@ -46,11 +46,14 @@ function varargout = iqWeight_01(varargin)
         hold(ax,'on');
         plot(ax, abs(iqWeight1),'.r');
         legend('|0>','|1>');
-    end
+    else
+            hf = [];
+        end
     if ischar(args.save)
         args.save = false;
-        choice  = questdlg('Update settings?','Save options',...
-                'Yes','No','No');
+        choice  = qes.ui.questdlg_timer(600,'Update settings?','Save options','Yes','No','Yes');
+%         choice  = questdlg('Update settings?','Save options',...
+%                 'Yes','No','No');
         if ~isempty(choice) && strcmp(choice, 'Yes')
             args.save = true;
         end

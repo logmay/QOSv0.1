@@ -126,7 +126,7 @@ function StatusChk(obj)
         oldinfostr = TrimNotes(oldinfostr);
         oldinfostr = oldinfostr(:)';
         newinfostr = [datestr(obj.time(obj.dpoint,1),'dd mmm HH:MM:SS'),10,Msg,10,oldinfostr];
-        if length(newinfostr) > 1024;
+        if length(newinfostr) > 1024
             newinfostr(1024:end) = [];
         end
         set(obj.uihandles.InfoDisp,'String',newinfostr);
@@ -172,7 +172,7 @@ function StatusChk(obj)
         oldinfostr = TrimNotes(oldinfostr);
         oldinfostr = oldinfostr(:)';
         newinfostr = [datestr(obj.time(obj.dpoint,1),'dd mmm HH:MM:SS'),10,'Send report:',10,str,10,oldinfostr];
-        if length(newinfostr) > 1024;
+        if length(newinfostr) > 1024
             newinfostr(1024:end) = [];
         end
         set(obj.uihandles.InfoDisp,'String',newinfostr);

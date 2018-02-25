@@ -1,7 +1,8 @@
 % bring up qubits - spectroscopy
 % Yulin Wu, 2017/3/11
-amp = [0:150:2e4];
-rabi_amp1('qubit','q7','biasAmp',[0],'biasLonger',20,...
+amp = [0e4:500:3e4];
+% amp = 1.85e4;
+rabi_amp1('qubit','q6','biasAmp',[0],'biasLonger',20,...
       'xyDriveAmp',amp,'detuning',[0],'driveTyp','X/2',...
       'dataTyp','P','gui',true,'save',true);
 % rabi_amp1('qubit','q2','xyDriveAmp',[0:500:3e4]);  % lazy mode
@@ -15,27 +16,17 @@ rabi_long1_freq('qubit','q6','biasAmp',0,'biasLonger',5,...
       'detuning',[-10:1:10]*1e6,...
       'dataTyp','P','gui',true,'save',true);
 %%
-setQSettings('r_avg',3000);
-ramsey('qubit','q9','mode','dp',... % available modes are: df01, dp and dz
-      'time',[20:20:8000],'detuning',[1]*2e6,...
+setQSettings('r_avg',2000);
+ramsey('qubit','q3','mode','dp',... % available modes are: df01, dp and dz
+      'time',[10:20:4000],'detuning',[1]*2e6,...
       'dataTyp','P','phaseOffset',0,'notes','','gui',true,'save',true);
-%%
-setQSettings('r_avg',5000);
-ramsey('qubit','q9','mode','dp',... % available modes are: df01, dp and dz
-      'time',[0:50:2000],'detuning',[0]*1e6,...
-      'dataTyp','P','phaseOffset',0,'notes','','gui',true,'save',true); % P or Phase
-%%
-ramsey_dz('qubit','q1',...
-       'time',[40],'detuning',[0],'phaseOffset',0,...
-       'dataTyp','P',...   % S21 or P
-       'gui','true','save','true');
 %%
 spin_echo('qubit','q9','mode','dp',... % available modes are: df01, dp and dz
       'time',[0:50:8000],'detuning',[2]*1e6,...
       'notes','','gui',true,'save',true);
 %%
-setQSettings('r_avg',2000);
-T1_1('qubit','q3','biasAmp',[9000],'biasDelay',20,'time',[20:20:5e3],... % [20:200:2.8e4]
+setQSettings('r_avg',1500);
+T1_1('qubit','q3','biasAmp',linspace(1.525e+04,1.616e+04,10),'biasDelay',20,'time',[20:500:25e3],... % [20:200:2.8e4]
       'gui',true,'save',true);
 %%
 resonatorT1('qubit','q2',...

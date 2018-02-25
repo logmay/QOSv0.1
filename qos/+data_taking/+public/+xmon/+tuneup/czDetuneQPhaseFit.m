@@ -45,10 +45,21 @@ function varargout = czDetuneQPhaseFit(varargin)
             xlabel(ax,'phase shift(\pi)');
             ylabel(ax,'phase(\pi)');
             title('not found! Probably out of range.');
+        else
+            hf = [];
         end
         error('not found! Probably out of range.');
     end
     scz.dynamicPhase(3) = scz.dynamicPhase(3) + phase0;
+    if ischar(args.save)
+        args.save = false;
+        choice  = qes.ui.questdlg_timer(600,'Update settings?','Save options','Yes','No','Yes');
+%         choice  = questdlg('Update settings?','Save options',...
+%                 'Yes','No','No');
+        if ~isempty(choice) && strcmp(choice, 'Yes')
+            args.save = true;
+        end
+    end
     if args.save
         QS.saveSSettings({'shared','g_cz',aczSettingsKey,'dynamicPhase'},scz.dynamicPhase);
     end

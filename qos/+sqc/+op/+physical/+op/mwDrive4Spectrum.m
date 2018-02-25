@@ -40,6 +40,10 @@ classdef mwDrive4Spectrum < sqc.op.physical.operator
 			% S = qes.waveform.spacer(obj.qubits{1}.spc_zLonger);
             S = qes.waveform.spacer(obj.qubits{1}.spc_zLonger+1);
 			obj.xy_wv{1} = [S,wv,S];
+            
+            obj.loFreq = obj.mw_src_frequency(1);
+            obj.loPower = obj.mw_src_power(1);
+            obj.sbFreq = wv.carrierFrequency;
         end
     end
 end

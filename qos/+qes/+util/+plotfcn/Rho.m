@@ -101,8 +101,8 @@ function ax = Rho(data,ax,FaceAlpha,isRawData)
             zLim1 = get(ax(1),'ZLim');
             zLim2 = get(ax(2),'ZLim');
             zLim = [min(zLim1(1),zLim2(1)),max(zLim1(2),zLim2(2))];
-            set(ax(1),'ZLim',zLim,'View',[-37.5,30]);
-            set(ax(2),'ZLim',zLim,'View',[-37.5,30]);
+            set(ax(1),'XLim',[0,2^numQs+1],'YLim',[0,2^numQs+1],'ZLim',zLim,'View',[-37.5,30],'Projection','orthographic');
+            set(ax(2),'XLim',[0,2^numQs+1],'YLim',[0,2^numQs+1],'ZLim',zLim,'View',[-37.5,30],'Projection','orthographic');
         end
     end
 

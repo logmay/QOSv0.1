@@ -38,10 +38,10 @@ end
 II = 0;
 
 function [f_,f_fit] = sweepFreq(ind,biasselected,f0list)
-    if ind==1
+    if ind < 3
         f_center=args.swpInitf01;
         f_fit=[0,0,0,f_center];
-    elseif II>1 && II<=3
+    elseif II == 3
         f0list(find(f0list==0))=[];
         f_fit=polyfit(biasselected,f0list,1);
         f_center=polyval(f_fit,bias0(inx(ind)))*1e9;

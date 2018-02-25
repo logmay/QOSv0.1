@@ -46,7 +46,7 @@ s21_zdc_networkAnalyzer('qubit',qNames{qubitIndex},...% 'NAName' can be ommitted
       'gui',true,'save',true);
 end
 %% s21 with DAC, a coarse scan to find all the qubit readoutFreqs
-s21_rAmp('qubit','q1','freq',[6.78065e9-3e6:0.02e6:6.78065e9+3e6],'amp',6000,...
+s21_rAmp('qubit','q7','freq',[6.78065e9-3e6:0.02e6:6.78065e9+3e6],'amp',6000,...
       'notes','','gui',true,'save',true);
 %% finds all qubit readoutFreqs automatically by fine s21 scan, session/public/autoConfig.readoutResonators.* has to be properly set for it to work
 [readoutFreqs, pkWithd] = auto.qubitreadoutFreqs();
@@ -64,12 +64,12 @@ for ii = 1:numel(qNames)
     setQSettings('r_freq',readoutFreqs(ii),qNames{ii});
 end
 %%  s21 vs power with DAC to finds the dispersive shift
-q = 'q3';
+q = 'q11';
 setQSettings('r_avg',500);
-amp = logspace(log10(1000),log10(30000),25);
+amp = logspace(log10(700),log10(15000),20);
 % amp = getQSettings('r_amp',q);
 rfreq = getQSettings('r_freq',q);
-freq = rfreq-0.7e6:0.1e6:rfreq+0.5e6;
+freq = rfreq-1.5e6:0.15e6:rfreq+1e6;
 s21_rAmp('qubit',q,'freq',freq,'amp',amp,...
       'notes','','gui',true,'save',true);
 %%

@@ -45,7 +45,7 @@ end
 R = measure.resonatorReadout_ss(q);
 R.swapdata = true;
 R.name = '|IQ|';
-R.datafcn = @(x)mean(abs(x));
+R.datafcn = @(x)abs(mean(x));
 
 x = expParam(Z,'amp');
 x.name = [q.name,' z bias amplitude'];

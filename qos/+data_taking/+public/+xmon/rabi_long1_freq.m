@@ -59,7 +59,7 @@ switch args.dataTyp
         R = measure.resonatorReadout_ss(q,false,true);
         R.swapdata = true;
         R.name = '|S21|';
-        R.datafcn = @(x)mean(abs(x));
+        R.datafcn = @(x)abs(mean(x));
     otherwise
         throw(MException('QOS_rabi_long1',...
 			'unrecognized dataTyp %s, available dataTyp options are P and S21.',...

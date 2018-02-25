@@ -1,3 +1,4 @@
+% toolbox.data_tool.showprocesstomo(pexp,pideal,User_defined_gate)
 function [] = showprocesstomo(pexp,pideal,User_defined_gate)
 % Tomo data check
 % 数据： P
@@ -25,6 +26,15 @@ function [] = showprocesstomo(pexp,pideal,User_defined_gate)
 pexp = real(pexp);
 pideal = real(pideal);
 numQs = round(log(size(pexp,2))/log(3));
+
+%add 2018.01.26 Liswer
+is_fit=1;
+statetomo_rho_prime=zeros(2^numQs,2^numQs,4^numQs);
+for ii=1:4^numQs
+    data=reshape(pexp(ii,:,:),3^numQs,2^numQs);
+    statetomo_rho_prime(:,:,ii)=stateTomoData2Rho(data,is_fit);
+end
+
 if nargin < 3
     User_defined_gate=eye(2^numQs);
 end
@@ -85,13 +95,16 @@ hpopupidealdata = uicontrol(h,'Style','popup',...
     'position',[0.8,0.85,0.15,0.1],...
     'string',{'PIdeal','CZ','CNOT','Idle','iSWAP','SWAP','User Defined'},...
     'callback',@uicallback);
+
 uicallback(hpopupshow,0)
 
+
+
 function uicallback(hObject,callbackdata)
-    showdata()
+    showdata(statetomo_rho_prime)
 end
 
-function showdata()
+function showdata(statetomo_rho_prime)
     ishow = get(hpopupshow,'Value');
     iidealdata = get(hpopupidealdata,'Value');
     theta=zeros(1,numQs);
@@ -99,7 +112,11 @@ function showdata()
         theta(ii1) = get(hsldtheta(ii1),'Value')/180*pi;
         set(htexttheta(ii1),'string',['θ',num2str(ii1),': ' num2str(theta(ii1)/pi*180,4) '°']);
     end
-    pe = rotatep(pexp,theta);
+    %pe = rotatep(pexp,theta);
+    statetomo_rho_rotate=zeros(2^numQs,2^numQs,4^numQs);
+    for ii1=1:4^numQs
+        statetomo_rho_rotate(:,:,ii1) = rotaterho(statetomo_rho_prime(:,:,ii1),theta);
+    end
     switch iidealdata
         case 1 % PIdeal
             pid = pideal;
@@ -116,16 +133,24 @@ function showdata()
         case 7 % User difined
             pid = m2p(User_defined_gate);
     end
+    
+    statetomo_rho_id=zeros(2^numQs,2^numQs,4^numQs);
+    for ii1=1:4^numQs
+        data_id=reshape(pid(ii1,:,:),3^numQs,2^numQs);
+        statetomo_rho_id(:,:,ii1)=stateTomoData2Rho(data_id,0);
+    end
+    
+
     switch ishow
         case 1
-            chiexp = processTomoData2Rho(pe);
-            chiid = processTomoData2Rho(pid);
+            chiexp = processTomoData2Rho(statetomo_rho_rotate);
+            chiid = processTomoData2Rho(statetomo_rho_id);
             showchi(hax1,hax2,chiexp,chiid);
             F = fidelity(chiexp,chiid);
         otherwise
             istate = ishow-1;
-            rhoexp = stateTomoData2Rho(squeeze(pe(istate,:,:)));
-            rhoid = stateTomoData2Rho(squeeze(pid(istate,:,:)));
+            rhoexp = statetomo_rho_rotate(:,:,istate);
+            rhoid = statetomo_rho_id(:,:,istate);
             showrho(hax1,hax2,rhoexp,rhoid)
             F = fidelity(rhoexp,rhoid);
     end
@@ -156,17 +181,23 @@ function bttnautocallback(hObject, eventdata, handles)
     ishow = get(hpopupshow,'Value');
     switch ishow
         case 1
-            [theta] = thetafit(pexp,pid);
+            [theta] = thetafit(statetomo_rho_prime,pid);
         otherwise
             istate = ishow-1;
-            [theta] = thetafit(pexp(istate,:,:),pid(istate,:,:));
+            [theta] = thetafit(statetomo_rho_prime(:,:,istate),pid(istate,:,:));
     end
+    theta_ = theta; % Yulin Wu
     for ii2=1:numQs
-        set(hsldtheta(ii2),'Value',theta(ii2)*180/pi);
-        set(hsldtheta(ii2),'Value',theta(ii2)*180/pi);
+        if theta_(ii2) <= -pi
+            theta_(ii2) = theta(ii2) + 2*pi;
+        elseif theta_(ii2) > pi
+            theta_(ii2) = theta(ii2) - 2*pi;
+        end
+        set(hsldtheta(ii2),'Value',theta_(ii2)*180/pi);
+        set(hsldtheta(ii2),'Value',theta_(ii2)*180/pi);
     end
-    showdata();
-    disp(['[' num2str(-theta)  ']'])
+    showdata(statetomo_rho_prime);
+    disp(['[' num2str(-theta_)  ']'])
 end
 end
 
@@ -210,7 +241,7 @@ function showchi(haxreal,haximage,chiexp,chiid)
     set(gca,'YTickLabel',chi_Label);
     xlabel(sigam_index_string); ylabel(sigam_index_string);
     colorbar('position',[0.45 0.3 0.01 0.4]);
-    colormap jet
+    colormap jet;
     hold off;
     axes(haximage);
     hold off;
@@ -238,7 +269,6 @@ function showchi(haxreal,haximage,chiexp,chiid)
     colorbar('position',[0.95 0.3 0.01 0.4]);
     hold off;
 end
-
 function showrho(haxreal,haximage,rhoexp,rhoid)
     numQs = round(log(size(rhoexp,1))/log(2));
     axes(haxreal);
@@ -301,21 +331,28 @@ function showrho(haxreal,haximage,rhoexp,rhoid)
     colorbar('position',[0.95 0.3 0.01 0.4]);
     hold off;
 end
-
-function [theta] = thetafit(pexp,pid)
-    function y = fitFunc(pexp,pid,theta)
-        pe = rotatep(pexp,theta);
+function [rho_rotate] = rotaterho(rho_prime,theta)
+    numQs = round(log(size(rho_prime,1))/log(2));
+    Z = [1,0;0,-1];
+    U=1;
+    for ii=1:numQs
+        U=kron(expm(-1i*theta(ii)*Z/2),U);
+    end
+    rho_rotate = U*rho_prime*U';
+end
+function [theta] = thetafit(statetomo_rho_prime,pid)
+    function y = fitFunc(statetomo_rho_prime,pid,theta,sz)
+        pe = rotatep(statetomo_rho_prime,theta,sz);
         D = (pe - pid).^2;
         y = sum(D(:));
     end
-    numQs = round(log(size(pexp,2))/log(3));
-    theta = qes.util.fminsearchbnd(@(theta)fitFunc(pexp,pid,theta),zeros(1,numQs),-ones(1,numQs)*2*pi,ones(1,numQs)*2*pi);
+    numQs = round(log(size(statetomo_rho_prime,2))/log(2));
+    sz=size(pid,1);
+    theta = qes.util.fminsearchbnd(@(theta)fitFunc(statetomo_rho_prime,pid,theta,sz),zeros(1,numQs),-ones(1,numQs)*2*pi,ones(1,numQs)*2*pi);
 end
-
-function [pr] = rotatep(p,theta)
-    sz = size(p,1);
+function [pr] = rotatep(statetomo_rho_prime,theta,sz)
     Z = [1,0;0,-1];
-    numQs = round(log(size(p,2))/log(3));
+    numQs = round(log(size(statetomo_rho_prime,2))/log(2));
     pr = NaN(sz,3^numQs,2^numQs);
     U=1;
     for ii=1:numQs
@@ -323,19 +360,17 @@ function [pr] = rotatep(p,theta)
     end
     %U = kron(expm(-1i*theta2*Z/2),expm(-1i*theta1*Z/2));
     for istate = 1:sz
-        rho = stateTomoData2Rho(squeeze(p(istate,:,:)));
+        rho = statetomo_rho_prime(:,:,istate);
         rho = U*rho*U';
         pr(istate,:,:) = rho2p(rho);
     end
     pr = real(pr);
 end
-
 function [F] = fidelity(rho1,rho2)
 m = rho1*rho2;
 F = trace(m);
 F = sqrt(real(F));
 end
-
 function [P] = CZ(numQs)
 cz = [1,0,0,0;
      0,1,0,0;
@@ -344,7 +379,6 @@ cz = [1,0,0,0;
  cz = kron(eye(2^(numQs-2)),cz);
 P = m2p(cz);
 end
-
 function [P] = CNOT(numQs)
 cnot = [1,0,0,0;
      0,1,0,0;
@@ -353,11 +387,9 @@ cnot = [1,0,0,0;
  cnot = kron(eye(2^(numQs-2)),cnot);
 P = m2p(cnot);
 end
-
 function [P] = IDLE(numQs)
 P = m2p(eye(2^numQs));
 end
-
 function [P] = ISWAP(numQs)
 iswap = [1,0,0,0;
      0,0,1i,0;
@@ -366,7 +398,6 @@ iswap = [1,0,0,0;
  iswap = kron(eye(2^(numQs-2)),iswap);
 P = m2p(iswap);
 end
-
 function [P] = SWAP(numQs)
 swap = [1,0,0,0;
      0,0,1,0;
@@ -375,7 +406,6 @@ swap = [1,0,0,0;
  swap = kron(eye(2^(numQs-2)),swap);
 P = m2p(swap);
 end
-
 function [P] = m2p(m)
 s = cell(1,4);
 s{1} = [1;0];
@@ -394,7 +424,6 @@ for ii=1:4^numQs
     P(ii,:,:) = rho2p(rho_ii_final);
 end     
 end
-
 function [P] = rho2p(rho)
 % single_mesure_matrix(:,:,1) = [0 1;1 0];
 % single_mesure_matrix(:,:,2) = [0 -1i;1i 0];
@@ -417,10 +446,10 @@ for ii=1:3^numQs
     for jj=1:2^numQs
         P(ii,jj)=rho_ii(jj,jj);
     end
+    P=abs(P);
 end
 end
-
-function chi=processTomoData2Rho(P)
+function chi=processTomoData2Rho(statetomo_rho)
 
 %statetomo_rho 是一个 (2^n,2^n,4^n)矩阵，
 %第三个维度是态的编号，
@@ -431,15 +460,8 @@ function chi=processTomoData2Rho(P)
 % rho(:,:,5)： 初态是 |q2:1, q1:0>；
 % rho(:,:,6)： 初态是 |q2:1, q1:1>；
     
-    numQs = round(log(size(P,2))/log(3));
-    
-    %求4^n个不同初态的statetomo
-    statetomo_rho=zeros(2^numQs,2^numQs,4^numQs);
-    for ii=1:4^numQs
-        data=reshape(P(ii,:,:),3^numQs,2^numQs);
-        statetomo_rho(:,:,ii)=stateTomoData2Rho(data);
-    end
-    
+    numQs = round(log(size(statetomo_rho,2))/log(2));
+
     %求4^n个不同初态的密度矩阵，并将所有密度矩阵拉直重组
     rho_order_index=zeros(4^numQs,4^numQs);
     rho=zeros(2^numQs,2^numQs,4^numQs);
@@ -505,8 +527,7 @@ function chi=processTomoData2Rho(P)
     chi_order_index=langbuda_order_index/bata_order_index;
     chi=reshape(chi_order_index,4^numQs,4^numQs).';
 end
-
-function rho = stateTomoData2Rho(data)
+function rho = stateTomoData2Rho(data,is_fit)
 % data: 3^n by 2^n
 % row: {'Y2p','X2m','I'} => {'sigma_x','sigma_y','sigma_z'}(abbr.: {X,Y,Z})
 %       1Q: {X}, {Y} ,{Z}
@@ -578,8 +599,11 @@ function rho = stateTomoData2Rho(data)
     for ii=1:2^numQs
         rho(ii,:)=rho0((ii-1)*2^numQs+1:ii*2^numQs);
     end
+    if(is_fit)
+        [rho_opt]=fit_rho(rho,data) ;
+        rho=rho_opt;
+    end
 end
-
 function qubit_base_index=transform_index_fun(numQs,order_index,count_unit)
 %用于下表转化（算法实质类似进制转换）
 %order_index：是拉直化坐标
@@ -592,4 +616,582 @@ function qubit_base_index=transform_index_fun(numQs,order_index,count_unit)
        qubit_base_index(ii)=mod(old_index,count_unit)+1;
        old_index=fix(old_index/count_unit);
    end
+end
+function [rho_opt]=fit_rho(rho,data)
+
+numQs = round(log(size(rho,2))/log(2));
+[eigenstate,eigenvalue]=eig(rho);
+P_pure_state=zeros(1,2^numQs);
+V_pure_state=eigenstate;
+for ii=1:2^numQs
+    P_pure_state(ii)=real(eigenvalue(ii,ii));
+end
+
+function_handle=@(x)x2distance(x,numQs,V_pure_state,data);
+x_center=[P_pure_state(1:2^numQs-1),zeros(1,round((2^numQs-1)*(2^numQs)))];
+x0=[x_center;x_center+0.01*eye(length(x_center))];
+
+[ x_opt, x_trace, y_trace, n_feval] = NelderMead (function_handle, x0, 1e-5, 1e-5, 200);
+[rho_opt]=x2rho(x_opt,numQs,V_pure_state);
+
+%%%for test
+% fprintf('now');
+% clf;
+% figure(200);
+% plot(1:length(y_trace),y_trace);
+% title('y trace')
+% 
+% [m,n]=size(x_trace);
+% figure(201);
+% hold on;
+% for ii=1:3
+%     plot(1:m,x_trace(:,ii))
+% end
+% plot(1:m,1-x_trace(:,1)-x_trace(:,2)-x_trace(:,3))
+% title('x trace1')
+% figure(202);
+% hold on;
+% for ii=4:n
+%     plot(1:m,x_trace(:,ii))
+% end
+% title('x trace2')
+end
+function [rho]=x2rho(x,numQs,V_pure_state)
+
+P_pure_state=zeros(0,2^numQs);
+%边界与归一处理
+for ii=1:2^numQs-1
+    P_pure_state(ii)=max(0,x(ii));    
+end
+P_pure_state(2^numQs)=max(1-sum(P_pure_state),0);
+P_pure_state=P_pure_state/sum(P_pure_state);
+
+rotate_value=zeros(1,length(x)-2^numQs+1);
+for nn=1:length(rotate_value)
+    rotate_value(nn)=x(2^numQs-1+ii);
+end
+nn=0;
+rotate_matrix_all=eye(2^numQs);
+for ii=2:2^numQs
+    for jj=1:ii-1
+        nn=nn+2;
+        R_rotate=rotate_value(nn-1)+1i*rotate_value(nn);
+        delta_matrix=eye(2^numQs);
+        delta_matrix(ii,jj)=R_rotate;
+        delta_matrix(jj,ii)=-R_rotate';
+        delta_matrix(ii,ii)=sqrt(1-abs(R_rotate)^2);
+        delta_matrix(jj,jj)=sqrt(1-abs(R_rotate)^2);
+    end
+    rotate_matrix_all=rotate_matrix_all*delta_matrix;
+end
+
+rho=V_pure_state*diag(P_pure_state)*V_pure_state';
+
+end
+function distance=x2distance(x,numQs,V_pure_state,data)
+    [rho]=x2rho(x,numQs,V_pure_state);
+    [P] = rho2p(rho);
+    distance=sum(sum((P-data).^2));    
+end
+function [ x_opt, x_trace, y_trace, n_feval] = NelderMead (function_handle, x0, tolX, tolY, max_feval, axs)
+
+%*****************************************************************************80
+%
+% NELDER_MEAD performs the Nelder-Mead optimization search.
+%
+%  Licensing:
+%
+%    This code is distributed under the GNU LGPL license.
+%
+%  Modified:
+%
+%    19 January 2009
+%
+%  Author:
+%
+%    Jeff Borggaard
+%
+%  Reference:
+%
+%    John Nelder, Roger Mead,
+%    A simplex method for function minimization,
+%    Computer Journal,
+%    Volume 7, Number 4, January 1965, pages 308-313.
+%
+%  Parameters:
+%
+%    Input, real X(M+1,M), contains a list of distinct points that serve as 
+%    initial guesses for the solution.  If the dimension of the space is M,
+%    then the matrix must contain exactly M+1 points.  For instance,
+%    for a 2D space, you supply 3 points.  Each row of the matrix contains
+%    one point; for a 2D space, this means that X would be a
+%    3x2 matrix.
+%
+%    Input, handle FUNCTION_HANDLE, a quoted expression for the function,
+%    or the name of an M-file that defines the function, preceded by an 
+%    "@" sign;
+%
+%    Input, logical FLAG, an optional argument; if present, and set to 1, 
+%    it will cause the program to display a graphical image of the contours 
+%    and solution procedure.  Note that this option only makes sense for 
+%    problems in 2D, that is, with N=2.
+%
+%    Output, real X_OPT, the optimal value of X found by the algorithm.
+%
+
+%
+%  Define algorithm constants
+%
+
+% modified by Yulin Wu
+
+x = x0;
+tolerance = tolY;
+
+  rho = 1;    % rho > 0
+  xi  = 2;    % xi  > max(rho, 1)
+  gam = 0.5;  % 0 < gam < 1
+  sig = 0.5;  % 0 < sig < 1
+  
+  %  tolerance = 1.0E-06;
+  %  max_feval = 250;
+%
+%  Initialization
+%
+
+  [ temp, n_dim ] = size ( x );
+  
+  plotTrace = false;
+  if nargin < 6
+     axs = [];
+  elseif numel(axs) < n_dim + 1
+     error('number of axes must equal to number of dimmension +1.');
+  else
+      plotTrace = true;
+  end
+
+  if ( temp ~= n_dim + 1 )
+    fprintf ( 1, '\n' );
+    fprintf ( 1, 'NELDER_MEAD - Fatal error!\n' );
+    error('  Number of points must be = number of design variables + 1\n');
+  end
+
+%   if ( nargin == 2 )
+%     flag = 0;
+%   end
+
+%   if ( flag )
+% 
+%     xp = linspace(-5,5,101);
+%     yp = xp;
+%     for i=1:101
+%       for j=1:101
+%         fp(j,i) = feval(function_handle,[xp(i),yp(j)]);
+%       end
+%     end
+%     
+%     figure ( 27 )
+%     hold on
+%     contour(xp,yp,fp,linspace(0,200,25))
+%     
+%     if ( flag )
+%       plot(x(1:2,1),x(1:2,2),'r')
+%       plot(x(2:3,1),x(2:3,2),'r')
+%       plot(x([1 3],1),x([1 3],2),'r')
+%       pause
+%       plot(x(1:2,1),x(1:2,2),'b')
+%       plot(x(2:3,1),x(2:3,2),'b')
+%       plot(x([1 3],1),x([1 3],2),'b')
+%     end
+% 
+%   end
+
+  index = 1 : n_dim + 1;
+  
+  [f    ] = evaluate ( x, function_handle ); 
+  n_feval = n_dim + 1;
+
+  [ f, index ] = sort ( f );
+  x = x(index,:);
+  % Yulin Wu
+  x_trace = x(1,:); 
+  y_trace = f(1);
+  traces = NaN(1,n_dim+1);
+  if plotTrace
+      for ww = 1:n_dim
+          if isgraphics(axs(ww))
+            traces(ww) = line('parent',axs(ww),'XData',1,'YData',x_trace(:,ww),'Marker','.','Color','b');
+            ylabel(axs(ww),['X(',num2str(ww,'%0.0f'),')']);
+            xlabel(axs(ww),num2str(x_trace(end,ww),'%0.4e'));
+          end
+      end
+      if isgraphics(axs(n_dim+1))
+        traces(n_dim+1) = line('parent',axs(n_dim+1),'XData',1,'YData',y_trace,'Marker','.','Color','r');
+        title(axs(n_dim+1),[num2str(n_feval),'th evaluation.']);
+        ylabel(axs(n_dim+1),'Y');
+      end
+      drawnow;
+  end
+
+%  
+%  Begin the Nelder Mead iteration.
+%
+  converged = false;
+  diverged  = false;
+  while ( ~converged && ~diverged)
+%    
+%  Compute the midpoint of the simplex opposite the worst point.
+%
+    x_bar = sum ( x(1:n_dim,:) ) / n_dim;
+%
+%  Compute the reflection point.
+%
+    x_r   = ( 1 + rho ) * x_bar ...
+                - rho   * x(n_dim+1,:);
+
+    f_r   = feval(function_handle,x_r); 
+    n_feval = n_feval + 1;
+    
+    % Yulin Wu
+  x_trace = [x_trace;x_r]; 
+  y_trace = [y_trace,f_r];
+  if plotTrace
+      for ww = 1:n_dim
+          if isgraphics(traces(ww))
+            set(traces(ww),'XData',1:length(y_trace),'YData',x_trace(:,ww));
+            xlabel(axs(ww),num2str(x_trace(end,ww),'%0.4e'));
+          end
+      end
+      if isgraphics(traces(n_dim+1))
+            set(traces(n_dim+1),'XData',1:length(y_trace),'YData',y_trace);
+            title(axs(n_dim+1),[num2str(n_feval),'th evaluation, reflection.']);
+      end
+      drawnow;
+  end
+
+    
+%
+%  Accept the point:
+%    
+    if ( f(1) <= f_r && f_r <= f(n_dim) )
+
+      x(n_dim+1,:) = x_r;
+      f(n_dim+1  ) = f_r; 
+       
+%       if (flag)
+%         title('reflection')
+%       end
+%
+%  Test for possible expansion.
+%
+    elseif ( f_r < f(1) )
+
+      x_e = ( 1 + rho * xi ) * x_bar ...
+                - rho * xi   * x(n_dim+1,:);
+
+      f_e = feval(function_handle,x_e); 
+      n_feval = n_feval+1;
+      
+      % Yulin Wu
+  x_trace = [x_trace;x_e]; 
+  y_trace = [y_trace,f_e];
+  if plotTrace
+      for ww = 1:n_dim
+          if isgraphics(traces(ww))
+            set(traces(ww),'XData',1:length(y_trace),'YData',x_trace(:,ww));
+            xlabel(axs(ww),num2str(x_trace(end,ww),'%0.4e'));
+          end
+      end
+      if isgraphics(traces(n_dim+1))
+            set(traces(n_dim+1),'XData',1:length(y_trace),'YData',y_trace);
+            title(axs(n_dim+1),[num2str(n_feval),'th evaluation, expansion.'])
+      end
+      drawnow;
+  end
+%
+%  Can we accept the expanded point?
+%
+      if ( f_e < f_r )
+        x(n_dim+1,:) = x_e;
+        f(n_dim+1  ) = f_e;
+%         if (flag), title('expansion'), end
+      else
+        x(n_dim+1,:) = x_r;
+        f(n_dim+1  ) = f_r;
+%         if (flag), title('eventual reflection'), end
+      end
+%
+%  Outside contraction.
+%
+    elseif ( f(n_dim) <= f_r && f_r < f(n_dim+1) )
+
+      x_c = (1+rho*gam)*x_bar - rho*gam*x(n_dim+1,:);
+      f_c = feval(function_handle,x_c);
+      n_feval = n_feval+1;
+      
+      % Yulin Wu
+          x_trace = [x_trace;x_c]; 
+          y_trace = [y_trace,f_c];
+          if plotTrace
+              for ww = 1:n_dim
+                  if isgraphics(traces(ww))
+                    set(traces(ww),'XData',1:length(y_trace),'YData',x_trace(:,ww));
+                    xlabel(axs(ww),num2str(x_trace(end,ww),'%0.4e'));
+                  end
+              end
+              if isgraphics(traces(n_dim+1))
+                    set(traces(n_dim+1),'XData',1:length(y_trace),'YData',y_trace);
+                    title(axs(n_dim+1),[num2str(n_feval),'th evaluation, outside contraction.'])
+              end
+              drawnow;
+          end
+      
+      if (f_c <= f_r) % accept the contracted point
+        x(n_dim+1,:) = x_c;
+        f(n_dim+1  ) = f_c;
+%         if (flag), title('outside contraction'), end
+
+      else
+        [x,f] = shrink(x,function_handle,sig);
+        n_feval = n_feval+n_dim;
+%         if (flag), title('shrink'), end
+
+        % Yulin Wu
+        [ f_, index_ ] = sort ( f );
+        x_ = x(index_,:);
+          x_trace = [x_trace;x_(1,:)]; 
+          y_trace = [y_trace,f_(1)];
+          if plotTrace
+              for ww = 1:n_dim
+                  if isgraphics(traces(ww))
+                    set(traces(ww),'XData',1:length(y_trace),'YData',x_trace(:,ww));
+                    xlabel(axs(ww),num2str(x_trace(end,ww),'%0.4e'));
+                  end
+              end
+              if isgraphics(traces(n_dim+1))
+                    set(traces(n_dim+1),'XData',1:length(y_trace),'YData',y_trace);
+                    title(axs(n_dim+1),[num2str(n_feval),'th evaluation, shrink.'])
+              end
+              drawnow;
+          end
+
+      end
+%
+%  F_R must be >= F(N_DIM+1).
+%  Try an inside contraction.
+%
+    else
+
+      x_c = ( 1 - gam ) * x_bar ...
+                + gam   * x(n_dim+1,:);
+
+      f_c = feval(function_handle,x_c); 
+      n_feval = n_feval+1;
+
+%
+%  Can we accept the contracted point?
+%
+      if (f_c < f(n_dim+1))
+        x(n_dim+1,:) = x_c;
+        f(n_dim+1  ) = f_c;
+%         if (flag), title('inside contraction'), end
+
+        % Yulin Wu
+          x_trace = [x_trace;x_c]; 
+          y_trace = [y_trace,f_c];
+          if plotTrace
+              for ww = 1:n_dim
+                  if isgraphics(traces(ww))
+                    set(traces(ww),'XData',1:length(y_trace),'YData',x_trace(:,ww));
+                    xlabel(axs(ww),num2str(x_trace(end,ww),'%0.4e'));
+                  end
+              end
+              if isgraphics(traces(n_dim+1))
+                    set(traces(n_dim+1),'XData',1:length(y_trace),'YData',y_trace);
+                    title(axs(n_dim+1),[num2str(n_feval),'th evaluation, inside contraction.'])
+              end
+              drawnow;
+          end
+          
+      else
+        [x,f] = shrink(x,function_handle,sig); n_feval = n_feval+n_dim;
+%         if (flag), title('shrink'), end
+        
+         % Yulin Wu
+        [ f_, index_ ] = sort ( f );
+        x_ = x(index_,:);
+          x_trace = [x_trace;x_(1,:)]; 
+          y_trace = [y_trace,f_(1)];
+          if plotTrace
+              for ww = 1:n_dim
+                  if isgraphics(traces(ww))
+                    set(traces(ww),'XData',1:length(y_trace),'YData',x_trace(:,ww));
+                    xlabel(axs(ww),num2str(x_trace(end,ww),'%0.4e'));
+                  end
+              end
+              if isgraphics(traces(n_dim+1))
+                    set(traces(n_dim+1),'XData',1:length(y_trace),'YData',y_trace);
+                    title(axs(n_dim+1),[num2str(n_feval),'th evaluation, shrink.'])
+              end
+              drawnow;
+          end
+         
+      end
+
+    end
+%
+%  Resort the points.  Note that we are not implementing the usual
+%  Nelder-Mead tie-breaking rules  (when f(1) = f(2) or f(n_dim) =
+%  f(n_dim+1)...
+%
+    [ f, index ] = sort ( f );
+    x = x(index,:);
+    
+    % convergence smaller than tolerance, break, Yulin Wu
+    if all(range(x) - tolX < 0)
+        % Yulin Wu
+        if isgraphics(traces(n_dim+1))
+            title(axs(n_dim+1),[num2str(n_feval),'th evaluation, optimization terminate: X tolerance reached.'])
+        end
+        break;
+    end
+%
+%  Test for convergence
+%
+    converged = f(n_dim+1)-f(1) < tolerance;
+    if converged && isgraphics(traces(n_dim+1))
+        title(axs(n_dim+1),[num2str(n_feval),'th evaluation, optimization terminate: Y tolerance reached.'])
+    end
+%   
+%  Test for divergence
+%
+    diverged = ( max_feval < n_feval );
+    
+%     if (flag)
+%       plot(x(1:2,1),x(1:2,2),'r')
+%       plot(x(2:3,1),x(2:3,2),'r')
+%       plot(x([1 3],1),x([1 3],2),'r')
+%       pause
+%       plot(x(1:2,1),x(1:2,2),'b')
+%       plot(x(2:3,1),x(2:3,2),'b')
+%       plot(x([1 3],1),x([1 3],2),'b')
+%     end
+
+  end
+
+  if ( 0 )
+    fprintf('The best point x^* was: %d %d\n',x(1,:));
+    fprintf('f(x^*) = %d\n',f(1));
+  end
+
+  x_opt = x(1,:);
+  
+  if ( diverged )
+    fprintf ( 1, '\n' );
+    fprintf ( 1, 'NELDER_MEAD - Warning!\n' );
+    fprintf ( 1, '  The maximum number of function evaluations was exceeded\n')
+    fprintf ( 1, '  without convergence being achieved.\n' );
+  end
+
+  return
+end
+function f = evaluate ( x, function_handle )
+
+%*****************************************************************************80
+%
+% EVALUATE handles the evaluation of the function at each point.
+%
+%  Licensing:
+%
+%    This code is distributed under the GNU LGPL license.
+%
+%  Modified:
+%
+%    19 January 2009
+%
+%  Author:
+%
+%    Jeff Borggaard
+%
+%  Reference:
+%
+%    John Nelder, Roger Mead,
+%    A simplex method for function minimization,
+%    Computer Journal,
+%    Volume 7, Number 4, January 1965, pages 308-313.
+%
+%  Parameters:
+%
+%    Input, real X(N_DIM+1,N_DIM), the points.
+%
+%    Input, real FUNCTION_HANDLE ( X ), the handle of a MATLAB procedure
+%    to evaluate the function.
+%
+%    Output, real F(1,NDIM+1), the value of the function at each point.
+%
+  [ temp, n_dim ] = size ( x );
+
+  f = zeros ( 1, n_dim+1 );
+  
+  for i = 1 : n_dim + 1
+    f(i) = feval(function_handle,x(i,:));
+  end
+
+  return
+end
+function [ x, f ] = shrink ( x, function_handle, sig )
+
+%*****************************************************************************80
+%
+% SHRINK shrinks the simplex towards the best point.
+%
+%  Discussion:
+%
+%    In the worst case, we need to shrink the simplex along each edge towards
+%    the current "best" point.  This is quite expensive, requiring n_dim new
+%    function evaluations.
+%
+%  Licensing:
+%
+%    This code is distributed under the GNU LGPL license.
+%
+%  Modified:
+%
+%    19 January 2009
+%
+%  Author:
+%
+%    Jeff Borggaard
+%
+%  Reference:
+%
+%    John Nelder, Roger Mead,
+%    A simplex method for function minimization,
+%    Computer Journal,
+%    Volume 7, Number 4, January 1965, pages 308-313.
+%
+%  Parameters:
+%
+%    Input, real X(N_DIM+1,N_DIM), the points.
+%
+%    Input, real FUNCTION_HANDLE ( X ), the handle of a MATLAB procedure
+%    to evaluate the function.
+%
+%    Input, real SIG, ?
+%
+%    Output, real X(N_DIM+1,N_DIM), the points after shrinking was applied.
+%
+%    Output, real F(1,NDIM+1), the value of the function at each point.
+%
+  [ temp, n_dim ] = size ( x );
+
+  x1 = x(1,:);
+  f(1) = feval ( function_handle, x1 );
+
+  for i = 2 : n_dim + 1
+    x(i,:) = sig * x(i,:) + ( 1.0 - sig ) * x(1,:);
+    f(i) = feval ( function_handle, x(i,:) );
+  end
+  
+  return
 end

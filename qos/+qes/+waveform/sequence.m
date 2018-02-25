@@ -1,4 +1,4 @@
-classdef (Sealed = true) sequence < handle & matlab.mixin.Copyable
+classdef (Sealed = true) sequence < matlab.mixin.Copyable
     % sequence
 
 % Copyright 2017 Yulin Wu, University of Science and Technology of China

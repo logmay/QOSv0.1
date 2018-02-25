@@ -45,7 +45,7 @@ switch args.dataTyp
         R = measure.resonatorReadout_ss(readoutQubit,false,true);
         R.swapdata = true;
         R.name = '|S21|';
-        R.datafcn = @(x)mean(abs(x));
+        R.datafcn = @(x)abs(mean(x));
     otherwise
         throw(MException('QOS_spectroscopy111_zdc',...
 			'unrecognized dataTyp %s, available dataTyp options are P and S21.',...

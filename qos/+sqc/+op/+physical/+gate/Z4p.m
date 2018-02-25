@@ -4,7 +4,7 @@ function g = Z4p(qubit)
 % Copyright 2017 Yulin Wu, University of Science and Technology of China
 % mail4ywu@gmail.com/mail4ywu@icloud.com
 	import sqc.op.physical.gate.*
-	switch qubit.g_Z_typ
+	switch qubit.g_Z_impl
 		case 'z' % implement by using z line
 			error('not implemented');
 		case 'xy' % implement by using X Y gates

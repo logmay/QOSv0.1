@@ -8,8 +8,7 @@ function q = qName2Obj(qName)
     try
         S = qes.qSettings.GetInstance();
     catch
-        throw(MException('QOS_qName2Qubit:qSettingsNotCreated',...
-			'qSettings not created: create the qSettings object, set user and select session first(only need to do once).'));
+        throw(MException('QOS_qName2Qubit:qSettingsNotCreated','qSettings not created.'));
     end
 	qs = S.loadSSettings(qName);
 	q = feval(str2func(['sqc.qobj.',qs.class]));

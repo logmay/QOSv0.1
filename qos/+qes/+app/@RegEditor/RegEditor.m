@@ -150,7 +150,7 @@ classdef (Sealed = true)RegEditor < handle
                 end
                 SSGroups = [SSGroups, {fInfo(ii).name}];
             end
-            selectedSSGroups = ['public',obj.qs.loadSSettings('selected')];
+            selectedSSGroups = ['shared',obj.qs.loadSSettings('selected')];
             ss = uitreenode('v0', 'session settings', [obj.qs.user, '-',obj.qs.session], '.NULL', false);
             ss.setIcon(im2java(qes.app.RegEditor.ico_user()));
             for ii = 1:numel(SSGroups)
@@ -200,9 +200,9 @@ classdef (Sealed = true)RegEditor < handle
             rootNode.add(ss);
         
             if obj.bigScreen
-                Pos = [5,5,255,600];
+                Pos = [5,5,255,750];
             else
-                Pos = [5,5,230,400];
+                Pos = [5,5,230,430];
             end
             obj.guiHandles.mtree = uitree('v0', 'Root', rootNode,...
                 'Parent',obj.guiHandles.reWin,'Position',Pos);

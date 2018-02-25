@@ -57,7 +57,7 @@ classdef (Abstract = true) tomography < qes.measurement.measurement
                 end
             end
             obj.numericscalardata = false;
-			obj.R = sqc.measure.resonatorReadout(obj.qubits,~isParallel);
+			obj.R = sqc.measure.resonatorReadout(obj.qubits,~isParallel,false);
         end
         function Run(obj)
             Run@qes.measurement.measurement(obj);
@@ -82,8 +82,7 @@ classdef (Abstract = true) tomography < qes.measurement.measurement
 			while true
 				idx = idx + 1;
 				if obj.showProgress
-					home;
-					disp(sprintf('%sState tomography: %0.0f of %0.0f',...
+					disp(sprintf('%sTomography: %0.0f of %0.0f',...
 						obj.progInfoPrefix, idx-1, numShots));
 				end
 				rGates = lpr();
@@ -122,8 +121,7 @@ classdef (Abstract = true) tomography < qes.measurement.measurement
             end
 			for ii = 1:obj.numReadouts
 				if obj.showProgress
-					home;
-					disp(sprintf('%sSate tomography: %0.0f of %0.0f',...
+					disp(sprintf('%sTomography: %0.0f of %0.0f',...
 						obj.progInfoPrefix, ii, obj.numReadouts));
 				end
 				opLn = 0;

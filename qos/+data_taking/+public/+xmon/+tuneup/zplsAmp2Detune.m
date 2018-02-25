@@ -268,8 +268,9 @@ function zplsAmp2Detune(qName,auto)
     end
     
     if ischar(args.save)
-        choice  = questdlg('Update settings?','Save options',...
-                'Yes','No','No');
+%         choice  = questdlg('Update settings?','Save options',...
+%                 'Yes','No','No'); 
+        choice  = qes.ui.questdlg_timer(600,'Update settings?','Save options','Yes','No','Yes');
         if ~isempty(choice) && strcmp(choice, 'Yes')
             QS.saveSSettings({q.name,'zdc_amp2f01'},param);
         end

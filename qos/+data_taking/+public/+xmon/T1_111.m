@@ -36,7 +36,7 @@ if ~isempty(args.r_avg)
     readoutQubit.r_avg=args.r_avg;
 end
 
-if strcmp(driveQubit.g_XY_typ,'hPi')
+if strcmp(driveQubit.g_XY_impl,'hPi')
     X2p = gate.X2p(driveQubit);
     X = X2p^2;
 else
@@ -46,7 +46,7 @@ I = gate.I(biasQubit);
 I.ln = args.biasDelay;
 Z = op.zBias4Spectrum(biasQubit);
 function procFactory(delay)
-    if strcmp(driveQubit.g_XY_typ,'hPi')
+    if strcmp(driveQubit.g_XY_impl,'hPi')
         X = X2p^2;
     end
     if delay > 0
@@ -60,7 +60,7 @@ function procFactory(delay)
 end
 R = measure.rReadout4T1(readoutQubit,X.mw_src{1});
 function rerunZ()
-    if strcmp(driveQubit.g_XY_typ,'hPi')
+    if strcmp(driveQubit.g_XY_impl,'hPi')
         piAmpBackup = X2p.amp;
         X2p.amp = 0;
         procFactory(y.val);

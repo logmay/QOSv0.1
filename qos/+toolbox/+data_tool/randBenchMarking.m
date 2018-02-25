@@ -68,8 +68,8 @@ function [fidelity,h] = randBenchMarking(numGates, Pref, Pgate, numQs, gateName,
 %     end
     
     if numQs == 1
-        title(ax,[gateName,' fidelity: ',num2str(fidelity,'%0.4f'),num2str(df,'%0.4f'),...
-        ', r_{ref}: ',num2str(rref,'%0.4f'),', r_{interleaved}: ',num2str(rgate,'%0.4f')],...
+        title(ax,[gateName,' fidelity: ',num2str(100*fidelity,'%0.2f'),'\pm',num2str(100*df,'%0.2f'),'%(95% confidence)',...
+        10,'r_{ref}: ',num2str(rref,'%0.4f'),', r_{interleaved}: ',num2str(rgate,'%0.4f')],...
         'FontSize',12,'FontWeight','normal','interpreter','tex');
     else
         title(ax,[gateName,' fidelity: ',num2str(100*fidelity,'%0.1f'),'\pm',num2str(100*df,'%0.1f'),'%(95% confidence)',...
@@ -80,5 +80,7 @@ function [fidelity,h] = randBenchMarking(numGates, Pref, Pgate, numQs, gateName,
     xf = 0.5:0.1:1*numGates(end)+0.5;
     plot(ax,xf,fitFcn(Cref,xf),'-b','LineWidth',2);
     plot(ax,xf,fitFcn(Cgate,xf),'-r','LineWidth',2);
+    yl = get(ax,'YLim');
+    set(ax,'YLim',[yl(1),1]);
     grid on;
 end

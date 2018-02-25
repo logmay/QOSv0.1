@@ -21,7 +21,7 @@ function SetAdcmt_6166V(obj,val)
         temp = CurrentOutput:...
             sign(val(1)-CurrentOutput)*5e-2:...
             val(1);
-        if temp(end) ~= val(1);
+        if temp(end) ~= val(1)
             OutputValue = [temp, val(1)];
         else
             OutputValue = temp;

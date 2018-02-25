@@ -42,15 +42,14 @@ classdef (Abstract = true) XY_base < sqc.op.physical.operator
             wv = feval(['qes.waveform.',obj.qubits{1}.qr_xy_wvTyp],wvArgs{:});
             if obj.qubits{1}.qr_xy_dragPulse
                 wv = qes.waveform.fcns.DRAG(wv,...
-                                            obj.qubits{1}.qr_xy_dragAlpha,...
-                                            obj.qubits{1}.f01,...
-                                            obj.qubits{1}.f02);
+                                            obj.qubits{1}.qr_xy_dragAlpha);
             end
             
             persistent da
             if isempty(da) || ~isvalid(da)
-                da = qes.qHandle.FindByClassProp('qes.hwdriver.hardware',...
-                        'name',obj.qubits{1}.channels.xy_i.instru);
+                da = qes.hwdriver.hardware.FindHwByName(obj.qubits{1}.channels.xy_i.instru);
+%                 da = qes.qHandle.FindByClassProp('qes.hwdriver.hardware',...
+%                         'name',obj.qubits{1}.channels.xy_i.instru);
             end
             obj.xy_daChnl{1,1} = da.GetChnl(obj.qubits{1}.channels.xy_i.chnl);
             obj.xy_daChnl{2,1} = da.GetChnl(obj.qubits{1}.channels.xy_q.chnl);
@@ -58,6 +57,10 @@ classdef (Abstract = true) XY_base < sqc.op.physical.operator
             wv.phase = obj.phaseOffset + obj.phase;
             wv.carrierFrequency = (obj.f01-obj.mw_src_frequency(1))/obj.xy_daChnl{1,1}.samplingRate;
             obj.xy_wv{1} = qes.waveform.sequence(wv);
+            
+            obj.loFreq = obj.mw_src_frequency(1);
+            obj.loPower = obj.mw_src_power(1);
+            obj.sbFreq = wv.carrierFrequency;
         end
     end
 end

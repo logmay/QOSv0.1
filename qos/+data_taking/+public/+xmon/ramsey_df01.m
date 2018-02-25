@@ -38,7 +38,7 @@ function varargout = ramsey_df01(varargin)
             R = measure.resonatorReadout_ss(q,false,true);
             R.swapdata = true;
             R.name = 'iq';
-            R.datafcn = @(x)mean(abs(x));
+            R.datafcn = @(x)abs(mean(x));
         otherwise
             throw(MException('QOS_ramsey_df01:unrcognizedDataTyp','unrecognized dataTyp %s, available dataTyp options are P and S21.', args.dataTyp));
     end

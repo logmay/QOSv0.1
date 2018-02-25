@@ -6,8 +6,16 @@ classdef (Sealed = true) acz < qes.waveform.waveform
 % mail4ywu@gmail.com/mail4ywu@icloud.com
 
     methods
-        function obj = acz(length, amplitude, thf, thi, lam2, lam3)
-			obj.jWaveform = com.qos.waveform.ACZ(length, amplitude, thf, thi, lam2, lam3);
+        function obj = acz(length, amplitude, thf, thi, lam2, lam3,...
+                ampInDetune, f01, maxF01, k)
+            if nargin == 6  % to be backward compatible
+                ampInDetune = false;
+                f01 = 6e6;
+                maxF01 = 6e6;
+                k = 1e7;
+            end
+			obj.jWaveform = com.qos.waveform.ACZ(length, amplitude, thf, thi, lam2, lam3,...
+                ampInDetune, f01, maxF01,k);
         end
     end
 end

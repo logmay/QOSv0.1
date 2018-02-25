@@ -49,7 +49,7 @@ switch args.dataTyp
         R = measure.resonatorReadout_ss(readoutQubit,false,true);
         R.swapdata = true;
         R.name = '|S21|';
-        R.datafcn = @(x)mean(abs(x));
+        R.datafcn = @(x)abs(mean(x));
     otherwise
         throw(MException('QOS_spectroscopy111_zdc',...
 			'unrecognized dataTyp %s, available dataTyp options are P and S21.',...
@@ -65,7 +65,7 @@ end
 
 x = expParam(@procFactory,true);
 x.name = [biasQubit.name,' z bias amplitude'];
-y = expParam(X.mw_src{1},'frequency');
+y = expParam(X,'mw_src_frequency');
 y.offset = -driveQubit.spc_sbFreq;
 y.name = [driveQubit.name,' driving frequency (Hz)'];
 y.callbacks ={@(x_)x.fcnval.Run()};

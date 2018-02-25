@@ -42,7 +42,9 @@ function varargout = czDynamicPhase(varargin)
     if args.gui
         hf = qes.ui.qosFigure(sprintf('ACZ dynamic phase | %s,%s,%s', qc.name, qt.name, qd.name),true);
         ax = axes('parent',hf);
-    end
+    else
+            hf = [];
+        end
 
     p= [1e4,0];
     count = 0;
@@ -76,7 +78,15 @@ function varargout = czDynamicPhase(varargin)
             czs.dynamicPhases(qdInd) = czs.dynamicPhases(qdInd) + p(1); % update for the next interation
         end
     end
-
+    if ischar(args.save)
+        args.save = false;
+        choice  = qes.ui.questdlg_timer(600,'Update settings?','Save options','Yes','No','Yes');
+%         choice  = questdlg('Update settings?','Save options',...
+%                 'Yes','No','No');
+        if ~isempty(choice) && strcmp(choice, 'Yes')
+            args.save = true;
+        end
+    end
     if args.save
         QS = qes.qSettings.GetInstance();
         QS.saveSSettings({'shared','g_cz',czs.key,'dynamicPhases'},czs.dynamicPhases);

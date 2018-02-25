@@ -16,7 +16,8 @@ classdef awg < qes.hwdriver.sync.instrument
             end
             obj = obj@qes.hwdriver.sync.instrument(name,interfaceobj,drivertype);
 			obj.chnlMothdNames = {'SendWave','Run','RunContinuousWv','StopContinuousWv'};
-			obj.chnlMothds = {@(obj,chnl,DASequence,isI)SendWave(obj,chnl,DASequence,isI),...
+			obj.chnlMothds = {@(obj,chnl,DASequence,isI,loFreq,loPower,sbFreq)SendWave(...
+                obj,chnl,DASequence,isI,loFreq,loPower,sbFreq),...
 								@(obj,chnl,N)Run(obj,chnl,N),...
 								@(obj,chnl,wvData)RunContinuousWv(obj,chnl,wvData),...
 								@(obj,chnl)StopContinuousWv(obj,chnl)};
@@ -52,7 +53,7 @@ classdef awg < qes.hwdriver.sync.instrument
         end
     end
 	methods (Hidden = true)
-		SendWave(obj,chnl,sequence,isI)
+		SendWave(obj,chnl,sequence,isI,loFreq,loPower,sbFreq)
 		Run(obj,chnl,N)
 		RunContinuousWv(obj,chnl,wvData)
 		StopContinuousWv(obj,chnl)

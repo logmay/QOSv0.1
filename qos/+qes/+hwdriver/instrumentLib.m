@@ -1,6 +1,5 @@
 classdef instrumentLib
-    % instrumentLib provides a central place to manager instrument dirver
-    % type alias.
+    % instrumentLib manages instrument dirver type alias.
     % 
 
 % Copyright 2015 Yulin Wu, Institute of Physics, Chinese  Academy of Sciences
@@ -17,7 +16,8 @@ classdef instrumentLib
         driveralias = {{'adc corp.','adcmt'}, {'adcmt6166i','adcmt6161i','6166','6161'};...
                         {'agilent technologies','agilent', 'keysight technologies', 'keysight'}, {'agilent_n9030b', 'n9030b'};... % spectrum analyzer N9000 series
                         {'agilent technologies','agilent', 'keysight technologies', 'keysight'}, ...
-                        {'agilent_n5230c', 'n5230a', 'n5230b', 'n5230c', 'e8361a', 'e8361b', 'e8361c', 'e8362a', 'e8362b', 'e8362c', 'e8363a', 'e8363b', 'e8363c', 'e8364a', 'e8364b', 'e8364c'};... % network analyzer
+						{'agilent_n5230c', 'n5230a', 'n5230b', 'n5230c', 'e8361a', 'e8361b', 'e8361c', 'e8362a', 'e8362b', 'e8362c', 'e8363a', 'e8363b', 'e8363c', 'e8364a', 'e8364b', 'e8364c'};... % network analyzer
+                        {'agilent technologies','agilent', 'keysight technologies', 'keysight'},{'agilent_e5071c','e5071c'};...
                         {'anritsu'}, {'anritsu_mg3692c', 'mg3692c'};... % signal generate
                         {'hewlett-packard','hewlett packard'}, {'place_holder'};...
                         {'national instruments'}, {'place_holder'};...

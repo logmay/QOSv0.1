@@ -1,0 +1,66 @@
+% data_taking.qCloud.CZRB
+function CZRB()
+import sqc.util.getQSettings
+import sqc.util.setQSettings
+import data_taking.public.xmon.*
+
+czQSets = {{{'q1','q2'};{'q1'};{'q2'}},...
+           {{'q3','q2'};{'q3'};{'q2'}},...
+           {{'q3','q4'};{'q3'};{'q4'}},...
+           {{'q5','q4'};{'q5'};{'q4'}},...
+           {{'q5','q6'};{'q5'};{'q6'}},...
+           {{'q7','q6'};{'q7'};{'q6'}},...
+           {{'q7','q8'};{'q7'};{'q8'}},...
+           {{'q9','q8'};{'q9'};{'q8'}},...
+           {{'q9','q10'};{'q9'};{'q10'}},...
+           {{'q11','q10'};{'q11'};{'q10'}},...
+          };
+numCZs = [7,7,7,7,7,7,7,7,7,7,7];
+PhaseTolerance = 0.03;
+logger = qes.util.log4qCloud.getLogger();
+iq2ProbNumSamples = 1e4;
+correctf01DelayTime = 0.6e-6;
+fineTune = false;
+
+AENumPi = 25;
+gAmpTuneRange = 0.03;
+for ii = 1:numel(czQSets)
+    for ww = 1:2
+        setQSettings('r_avg',2000);
+        q = czQSets{ii}{1}{ww};
+        correctf01 = true;
+        if strcmp(q,'q1')
+            correctf01 = false;
+        end
+        if ~qes.util.ismember(q,{'q7','q9'})
+            tuneup.correctf01byPhase('qubits',q,'delayTime',correctf01DelayTime,...
+                'gui',false,'save',true,'doCorrection',correctf01,'logger',logger);
+        end
+        
+        tuneup.iq2prob_01('qubits',q,'numSamples',iq2ProbNumSamples,...
+            'fineTune',fineTune,'gui',false,'save',true,'logger',logger); 
+        tuneup.xyGateAmpTuner_parallel('qubits',q,'gateTyp','X/2','AENumPi',AENumPi,...
+            'tuneRange',gAmpTuneRange,'gui',false,'save',true,'logger',logger);
+        tuneup.iq2prob_01('qubits',q,'numSamples',iq2ProbNumSamples,...
+            'fineTune',fineTune,'gui',false,'save',true,'logger',logger);
+    end
+
+    tuneup.czAmplitude('controlQ',czQSets{ii}{1}{1},'targetQ',czQSets{ii}{1}{2},...
+        'gui',false,'save',true,'logger',logger,'repeatIfOutOfBoundButClose',true);
+    for jj = 2:numel(czQSets{ii})
+        tuneup.czDynamicPhase_parallel('controlQ',czQSets{ii}{1}{1},...
+            'targetQ',czQSets{ii}{1}{2},'dynamicPhaseQs',czQSets{ii}{jj},...
+            'numCZs',numCZs(ii),'PhaseTolerance',PhaseTolerance,...
+            'gui',false,'save',true,'logger',logger);
+    end
+    
+    setQSettings('r_avg',1000);
+    numGates = uint16(unique(round(logspace(0,log10(20),15))));
+    [Pref,Pgate] = randBenchMarking('qubit1',czQSets{ii}{1}{1},'qubit2',czQSets{ii}{1}{2},...
+       'process','CZ','numGates',numGates,'numReps',50,...
+       'gui',true,'save',true);
+    [fidelity,h] = toolbox.data_tool.randBenchMarking(numGates, mean(Pref,1), mean(Pgate, 1),2, 'CZ');
+
+end
+
+end

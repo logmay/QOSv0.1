@@ -8,10 +8,14 @@ classdef I < sqc.op.physical.operator
         ln
     end
     methods
-        function obj = I(qubit)
+        function obj = I(qubit,ln)
 			assert(numel(qubit) == 1);
             obj = obj@sqc.op.physical.operator(qubit);
-			obj.length = obj.qubits{1}.g_I_ln;
+			if nargin < 2
+				obj.length = obj.qubits{1}.g_I_ln;
+			else
+				obj.length = ln;
+			end
             obj.setGateClass('I');
         end
         function set.ln(obj,val)

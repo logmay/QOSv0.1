@@ -1,4 +1,4 @@
-function wv_drag = DRAG(wv, alpha, f01, f02)
+function wv_drag = DRAG(wv, alpha)
     % make a DRAG version of waveform object wv
 	% typical value for alpha: 0.5
 

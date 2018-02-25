@@ -1,5 +1,5 @@
 function blueForsLogReader(logRootDir,startTime,endTime)
-%
+% logRootDir: Z:\newton\bluefors\log
 
 % Copyright 2017 Yulin Wu, Institute of Physics, Chinese  Academy of Sciences
 % mail4ywu@gmail.com/mail4ywu@icloud.com

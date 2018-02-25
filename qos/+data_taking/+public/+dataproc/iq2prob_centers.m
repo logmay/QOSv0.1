@@ -2,7 +2,7 @@ function [center0, center1, F00,F11,hf,axs,width] =...
 			iq2prob_centers(iq_raw_0,iq_raw_1,auto)
 % iq2prob_centers: finds raw iq centers(where probability of distribution is maximum)
 % F00: the probability of |0> correctly measured as |0>
-% F11:  the probability of |1> correctly measured as |0>
+% F11: the probability of |1> correctly measured as |0>
 % F01: the probability of |0> erroneously measured as |1>
 % F10: the probability of |1> erroneously measured as |0>
 % define:
@@ -10,10 +10,10 @@ function [center0, center1, F00,F11,hf,axs,width] =...
 % Pm = [Pm0; Pm1]; % the measured probability
 % for a state
 % S = a|0> + b|1>;
-% P = [P0; P1] = [abs(a); abs(b)]; % real real |0>, |1> state probability
+% P = [P0; P1] = [abs(a)^2; abs(b)^2]; %|0>, |1> state probabilities
 % by definition:
 % Pm = F*[P0; P1];
-% thus we have:
+% we have:
 % P = inv(F)*Pm;
 
 % Yulin Wu, 2017

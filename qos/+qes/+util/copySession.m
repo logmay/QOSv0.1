@@ -6,17 +6,17 @@ function copySession(source,destination)
     
 	
     if ~isvarname(destination)
-        throw(MException('QOS_copyUser:invalidDestinationName',...
+        throw(MException('QOS:copySession:invalidDestinationName',...
 			sprintf('invalid destination name: %s', destination)));
     end
 	try
         QS = qes.qSettings.GetInstance();
     catch
-        throw(MException('QOS_copyUser:qSettingsNotCreated',...
+        throw(MException('QOS:copySession:qSettingsNotCreated',...
 			'qSettings not created: create the qSettings object, set user and select session first.'));
     end
 	if isempty(QS.user)
-		throw(MException('QOS_copyUser:userNotSet',...
+		throw(MException('QOS:copySession:userNotSet',...
 			'user not set: create the qSettings object, set user and select session first.'));
 	end
 	if isempty(source)
@@ -24,17 +24,17 @@ function copySession(source,destination)
 	end
 	s = fullfile(QS.root,QS.user, source);
 	if ~exist(s,'file')
-		throw(MException('QOS_copyUser:sourceSessionNotExist',...
+		throw(MException('QOS:copySession:sourceSessionNotExist',...
 			sprintf('the given source session %s not exist', s)));
 	end
 	d = fullfile(QS.root,QS.user, destination);
 	if exist(d,'file')
-		throw(MException('QOS_copyUser:destinationSessionAllreadyExist',...
+		throw(MException('QOS:copySession:destinationSessionAllreadyExist',...
 			sprintf('destination %s allready exist', destination)));
 	end
 	[status,msg,msgID] = copyfile(s,d);
 	if ~status
-		throw(MException('QOS_copySession:copyError',msg));
+		throw(MException('QOS:copySession:copyFailure',msg));
     end
     
 end

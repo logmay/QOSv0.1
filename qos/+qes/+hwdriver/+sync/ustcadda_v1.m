@@ -275,6 +275,7 @@ classdef ustcadda_v1 < qes.hwdriver.icinterface_compatible % extends icinterface
                 obj.da_channel_list(k).data = [];
                 % è®¾ç½®é€šé?“è§¦?‘å?è¾“å‡ºå»¶æ—?
                 obj.da_channel_list(k).delay = 0;
+                
             end
             % é…?ç½®ADC,ç›®å??ªæ”¯æŒ?ä¸?¸ªç½‘å??
             for k = 1:obj.numADBoards
@@ -452,7 +453,12 @@ classdef ustcadda_v1 < qes.hwdriver.icinterface_compatible % extends icinterface
             end
         end
         
-        function SendWave(obj,channel,data,isIQ,loFreq)
+        function SendWave(obj,channel,data,loFreq,loPower,sbFreq)
+%             disp('in ustcadda_v1.SendWave: ');
+%             loFreq
+%             loPower
+%             sbFreq
+            
             if nargin < 4
                 isIQ = false;
             end
@@ -478,8 +484,7 @@ classdef ustcadda_v1 < qes.hwdriver.icinterface_compatible % extends icinterface
             
             % redefined offsetCorr to be a da board specific property other
             % than a ustcadda property, Yulin Wu
-            data = uint16(data +...
-                obj.da_list(obj.da_channel_list(channel).index).da.offsetcorr(obj.da_channel_list(channel).ch)); 
+            data = uint16(data); 
             % ?‘é?æ³¢å½¢
             da_struct.da.WriteWave(ch,0,data);
             % ç›¸å½“äºæˆ–ä¸Šä¸€ä¸ªé???
@@ -548,6 +553,17 @@ classdef ustcadda_v1 < qes.hwdriver.icinterface_compatible % extends icinterface
                 name = obj.da_list(k).da.name;
                 if(strcmpi(name,da_name))
                     obj.da_list(k).da_trig_delay = point;
+                end
+            end
+        end
+        
+        function AddDAOffset(obj,ch,offset)
+            if(length(ch)==length(offset))
+                for k =1:length(ch)
+                    ch_info = obj.da_channel_list(ch(k));
+                    channel = ch_info.ch;
+                    da = obj.da_list(ch_info.index).da;
+                    da.AddOffset(channel,offset(k))
                 end
             end
         end

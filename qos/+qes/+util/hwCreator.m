@@ -40,35 +40,42 @@ function hwobj = hwCreator(s)
             if ischar(s.interface) && (~isempty(strfind(s.interface,'ustc_da')) ||~isempty(strfind(s.interface,'ustc.ad')))
                 interfaceobj = feval(str2func(['@(chnlMap)qes.hwdriver.',s.interface,'(chnlMap)']),s.chnlMap);
             elseif ~isfield(s.interface,'class')
-                error('HardwareCreator:IllegalHaredwareSettings','Haredware settings ''interface'' field must be a struct with a ''class'' field, error in settings ''%s''', s.name);
+                throw(MException('QOS:hwCreator:illegalHaredwareSettings',...
+                    'the ''interface'' field in haredware settings ''%s'' not a struct with a ''class'' field', s.name));
             else
                 switch s.interface.class
                     case 'visa'
                         if ~isfield(s.interface,'vendor') || ~ismember(s.interface.vendor,{'ni','agilent'})
-                            error('HardwareCreator:UnrecognizedHaredwareSettings','empty or unsupported visa vendor class ''%s'' in settings ''%s''', s.interface.vendor, s.name);
+                            throw(MException('QOS:hwCreator:illegalHaredwareSettings',...
+                                'empty or unsupported visa vendor class ''%s'' in settings ''%s''', s.interface.vendor, s.name));
                         end
                         if ~isfield(s.interface,'rscname') || ~ischar(s.interface.rscname)
-                            error('HardwareCreator:UnrecognizedHaredwareSettings','empty or unrecognized visa resource string ''%s'' in settings ''%s''', s.interface.rscname, s.name);
+                            throw(MException('QOS:hwCreator:illegalHaredwareSettings',...
+                                'empty or unrecognized visa resource string ''%s'' in settings ''%s''', s.interface.rscname, s.name));
                         end
                         interfaceobj = visa(s.interface.vendor, s.interface.rscname);
                     case 'gpib'
                         if ~isfield(s.interface,'vendor') || ~ismember(s.interface.vendor,{'advantech','cec','contec','ics','iotech','keithley','mcc','ni','agilent'})
-                            error('HardwareCreator:UnrecognizedHaredwareSettings','empty or unsupported gpib vendor class ''%s'' in settings ''%s''', s.interface.vendor, s.name);
+                            throw(MException('QOS:hwCreator:illegalHaredwareSettings',...
+                                'empty or unsupported gpib vendor class ''%s'' in settings ''%s''', s.interface.vendor, s.name));
                         end
                         if ~isfield(s.interface,'boardidx')
                             s.interface.boardidx = 0;
                             warning('HardwareCreator:HaredwareSettingsFieldMissing','boardidx not set, 0 is used.');
                         end
-                        if ~isfield(s.interface,'gpibaddr') 
-                            error('HardwareCreator:HaredwareSettingsMissing','gpib address not set for: ''%s''', s.name);
+                        if ~isfield(s.interface,'gpibaddr')
+                            throw(MException('QOS:hwCreator:illegalHaredwareSettings',...
+                                'gpib address not set for: ''%s''', s.name));
                         end
                         interfaceobj = gpib(s.interface.vendor, s.interface.boardidx, s.interface.gpibaddr);
                     case 'tcpip'
                         if ~isfield(s.interface,'ip') || ~ischar(s.interface.ip)
-                            error('HardwareCreator:UnrecognizedHaredwareSettings','empty or illegal ip address format in settings ''%s''', s.interface.ip, s.name);
+                            throw(MException('QOS:hwCreator:illegalHaredwareSettings',...
+                                'empty or illegal ip address format in settings ''%s''', s.interface.ip, s.name));
                         end
                         if ~isfield(s.interface,'port') || ~isnumeric(s.interface.port)
-                            error('HardwareCreator:HaredwareSettingsMissing','empty or illegal port number format in settings ''%s''', s.name);
+                            throw(MException('QOS:hwCreator:illegalHaredwareSettings',...
+                                'empty or illegal port number format in settings ''%s''', s.name));
                         end
                         interfaceobj = tcpip(s.interface.ip, s.interface.port);
                     case {'sync.ustc_da_v1','sync.ustc_dc_v1','aync.ustc_da_v1','aync.ustc_dc_v1'}
@@ -79,7 +86,8 @@ function hwobj = hwCreator(s)
                     case {'sync.simuMwSrc'}
                         interfaceobj = feval(str2func(['@qes.hwdriver.', s.interface.class, '.GetInstance']));
                     otherwise
-                        error('HardwareCreator:UnrecognizedHaredwareSettings','unrecognized ''interface'' class ''%s''', s.interface.class);
+                        throw(MException('QOS:hwCreator:illegalHaredwareSettings',...
+                            'unrecognized ''interface'' class ''%s''', s.interface.class));
                 end
             end
             f = str2func(['@qes.hwdriver.', s.class, '.GetInstance']);
@@ -93,7 +101,8 @@ function hwobj = hwCreator(s)
         f = str2func(['@qes.hwdriver.', s.class{1}, '.GetInstance']);
         hwobj = feval(f, s.name, s.class{2:end});
     else
-        error('HardwareCreator:UnrecognizedHaredwareSettings','''class'' must be a char sting or a cell of char strings, error in settings ''%s''', s.name);
+        throw(MException('QOS:hwCreator:illegalHaredwareSettings',...
+            '''class'' not a char sting or a cell of char strings, error in settings ''%s''', s.name));
     end
     metadata = metaclass(hwobj);
     NotSetYetList = {};
@@ -133,8 +142,8 @@ function hwobj = hwCreator(s)
                 strcmp(fn{ii},'xfrFunc')
             numXfrFuncs = numel(s.(fn{ii}));
             if hwobj.numChnls ~= numXfrFuncs
-                throw(MException('QOS_awg:numXfrFuncNotMatchingNumChnls',...
-                    'number of xfrFuncs not matching number of channels.'));
+                throw(MException('QOS:hwCreator:illegalHaredwareSettings',...
+                    'number of xfrFuncs not matching number of awg channels.'));
             end
             xfrFuncSettings = s.(fn{ii});
             for uu = 1:numXfrFuncs

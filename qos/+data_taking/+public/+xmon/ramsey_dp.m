@@ -47,7 +47,7 @@ function varargout = ramsey_dp(varargin)
 		X2{ii} = op.XY2(q,pi/2+args.phaseOffset);
 		X2_{ii} = op.XY2(q,-pi/2);
 		I{ii} = gate.I(q);
-		Z{ii} = op.Z_arbPhase(q,args.phaseOffset);
+		Z{ii} = gate.ZArbPhase(q,args.phaseOffset);
 	end
     
 %     I = op.detune(q);
@@ -68,7 +68,7 @@ function varargout = ramsey_dp(varargin)
             R = measure.resonatorReadout_ss(qubits,false,true); 
             R.swapdata = true;
             R.name = 'iq';
-            R.datafcn = @(x)mean(abs(x));
+            R.datafcn = @(x)aba(mean(x));
         case 'Phase'
             R = measure.phase(qubits,parallelReadout);
             isPhase = true;

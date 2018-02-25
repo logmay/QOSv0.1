@@ -58,6 +58,15 @@ function varargout = czDetuneQPhaseTomoOpt(varargin)
     aczSettingsKey = sprintf('%s_%s',qc.name,qt.name);
     scz = QS.loadSSettings({'shared','g_cz',aczSettingsKey});
     scz.dynamicPhase(3) = scz.dynamicPhase(3) - fval;
+    if ischar(args.save)
+        args.save = false;
+        choice  = qes.ui.questdlg_timer(600,'Update settings?','Save options','Yes','No','Yes');
+%         choice  = questdlg('Update settings?','Save options',...
+%                 'Yes','No','No');
+        if ~isempty(choice) && strcmp(choice, 'Yes')
+            args.save = true;
+        end
+    end
     if args.save
         QS.saveSSettings({'shared','g_cz',aczSettingsKey,'dynamicPhase'},...
 								scz.dynamicPhase);

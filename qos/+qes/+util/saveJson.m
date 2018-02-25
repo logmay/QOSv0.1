@@ -76,7 +76,24 @@ if result{1}== 1
 %         end
 %         error('type error');
 %     end
-    error('type error');
+%     error('type error');
+    if isnumeric(value_backup)
+        valueInStr = num2str(value_backup);
+    elseif ischar(value_backup)
+        valueInStr = value_backup;
+    else
+        valueInStr = ['of class: ', class(value_backup)];
+    end
+    if iscell(fields)
+        fstr = fields{1};
+        for ww = 2:numel(fields)
+            fstr = [fstr, '.', fields{ii}];
+        end
+    else
+        fstr = fields;
+    end
+    msg = sprintf('error at saving value %s to field %s of json file: ',valueInStr, fstr, strrep(fullfilename,'\','\\'));
+    throw(MException('QOS_saveJson:typeError',msg))
 end
 %if result{1}== 2
 %    error('not a last layer');

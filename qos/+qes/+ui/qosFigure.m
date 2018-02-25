@@ -4,6 +4,16 @@ function varargout =qosFigure(figureTitle,autoClose, autoCloseTime)
 % Copyright 2017 Yulin Wu, USTC, China
 % mail4ywu@gmail.com/mail4ywu@icloud.com
 
+    persistent allQOSFigures;
+    if numel(allQOSFigures) > 50 % in rare cases the autoclose timers might fail
+        while numel(allQOSFigures) > 25
+            if isgraphics(allQOSFigures(1))
+                close(allQOSFigures(1));
+            end
+            allQOSFigures(1) = [];
+        end
+    end
+
     if nargin == 1
         autoClose = false;
     end
@@ -32,4 +42,5 @@ function varargout =qosFigure(figureTitle,autoClose, autoCloseTime)
         stop(tm);
         delete(tm);
     end
+    allQOSFigures(end+1) = h;
 end

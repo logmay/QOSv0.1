@@ -54,8 +54,8 @@ classdef ustc_da_v1 < qes.hwdriver.icinterface_compatible
 		function val=get.trigInterval(obj)
 			val = obj.ustcaddaObj.GetTrigInterval();
         end
-		function SendWave(obj,channel,data)
-            obj.ustcaddaObj.SendWave(obj.chnlMap(channel),data);
+		function SendWave(obj,channel,data,loFreq,loPower,sbFreq)
+            obj.ustcaddaObj.SendWave(obj.chnlMap(channel),data,loFreq,loPower,sbFreq);
         end
         function setChnlOutputDelay(obj,channel,delay)
              obj.ustcaddaObj.setDAChnlOutputDelay(obj.chnlMap(channel),delay);

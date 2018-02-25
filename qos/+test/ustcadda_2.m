@@ -8,27 +8,30 @@ QS = qSettings.GetInstance('D:\settings');
 % a DACs and ADCs reconfiguration is only needed when the hardware settings
 % has beens changed, a reconfiguration will update the changes to the
 % hardware.
-ustcaddaObj = ustcadda_v1.GetInstance();
+ustcaddaObj = qes.hwdriver.sync.ustcadda_v1.GetInstance();
 %%
 ustcaddaObj.close()
 %% run all channels
-numChnls = 64;
-numRuns = 50;
+numChnls = 60;
+numRuns = 100000;
 % wavedata=[32768*zeros(1,10),65535*zeros(1,10),32768*zeros(1,1)];
-wavedata=[3e4*zeros(1,2000),0*zeros(1,2000)];
-ustcaddaObj.runReps = 3e3;
+wavedata=[3e4*zeros(1,500),0*zeros(1,500)];
+ustcaddaObj.runReps = 2e3;
 tic
 clc
 for jj = 1:numRuns
+    tic
     for ii = 1:numChnls
-        tic
+%         tic
         ustcaddaObj.SendWave(ii,wavedata);
-        ii
-        toc
+%         ii
+%         toc
     end
     ustcaddaObj.Run(false);
 %      [datai,dataq] = ustcaddaObj.Run(true);
-    t = toc;
+    
+    pause(0.5);
+    toc
 %     disp(sprintf('%0.0f, elapsed time: %0.1fs',jj,t));
 end
 %% sync test, and use the mimimum oscillascope vertical range to check zero offset

@@ -248,7 +248,7 @@ classdef OxfordDRMonitor < handle
         end
     end
     methods (Access = private, Hidden = true)
-        function EnlargeDataCapacity(obj)
+        function ExpandDataCapacity(obj)
             DLen = 100000;
             datafilefullname = obj.m.Properties.Source;
             load(datafilefullname);

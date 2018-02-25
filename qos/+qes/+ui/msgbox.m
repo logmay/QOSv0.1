@@ -5,12 +5,12 @@ function msgbox(msg,title,modal)
 % mail4ywu@gmail.com/mail4ywu@icloud.com
     if nargin > 2
        if modal
-           msgbox(msg,title,'modal');
+           msgbox(msg,['QOS | ',title],'modal');
        else
-           msgbox(msg,title);
+           msgbox(msg,['QOS | ',title]);
        end
     elseif nargin > 1
-        msgbox(msg,title,'modal');
+        msgbox(msg,['QOS | ',title],'modal');
     else
         msgbox(msg,'QOS | Message','modal');
     end

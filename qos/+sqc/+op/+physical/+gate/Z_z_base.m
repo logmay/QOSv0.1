@@ -31,8 +31,9 @@ classdef (Abstract = true) Z_z_base < sqc.op.physical.operator
                 feval(['qes.waveform.',obj.qubits{1}.qr_z_wvTyp],wvArgs{:}));
             persistent da
             if isempty(da) || ~isvalid(da)
-                da = qes.qHandle.FindByClassProp('qes.hwdriver.hardware',...
-                        'name',obj.qubits{1}.channels.z_pulse.instru);
+                da = qes.hwdriver.hardware.FindHwByName(obj.qubits{1}.channels.z_pulse.instru);
+%                 da = qes.qHandle.FindByClassProp('qes.hwdriver.hardware',...
+%                         'name',obj.qubits{1}.channels.z_pulse.instru);
             end
             obj.z_daChnl{1} = da.GetChnl(obj.qubits{1}.channels.z_pulse.chnl);
         end

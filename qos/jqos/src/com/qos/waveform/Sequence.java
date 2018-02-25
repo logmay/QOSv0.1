@@ -6,14 +6,24 @@ import com.qos.exception.waveform.ChangeSealedSequenceError;
 import java.util.ArrayList;
 
 /**
- * Copyright 2017 Yulin Wu, University of Science and Technology of China.
+ * Copyright (c) 2017 onward, Yulin Wu. All rights reserved.
+ * <p>
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ * 1. Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * This software is provided on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND.
+ * <p>
  * mail4ywu@gmail.com/mail4ywu@icloud.com
- * Created on 04/06/2017.
+ * University of Science and Technology of China.
  */
 /**
  * in consideration of performance, the Sequence class is not designed to be safe, the user has to
- * regulate themselves in using the Sequence class: a sequence, once added to another sequence, should
- * never be modified afterwards, for example:
+ * abide to the following rule rule: a sequence, once added to another sequence, should
+ * never be modified afterwards
  */
 public final class Sequence{
     private int length;
@@ -21,7 +31,7 @@ public final class Sequence{
 
     private boolean sealed = false;
     // setSealed should only be called by DASequence, a sealed sequence is ready for launch, it can not be changed
-    // any more, including added to other sequence or having other sequences added in.
+    // any more, including added to other sequence or having other sequences added.
     void setSealed(){
         sealed = true;
     }
@@ -129,8 +139,7 @@ public final class Sequence{
             if (dLength > 0) try {
                 sequence2add.concat(new Spacer(dLength));
             } catch (ChangeSealedSequenceError e) {
-                // no need to do anything here
-                // it's fine here
+                // this is OK
             }
             va = sequence2add.samples(padLength, xfrFunc, cache);
         }
@@ -164,7 +173,7 @@ public final class Sequence{
             wvDataLn = wvData.length;
             wvLn = wv.length;
             notSpacer = !(wv instanceof Spacer || wv instanceof DC);
-            ///* pad both sides if not not pad both sides, disable the following lines
+            ///* pad both sides, if not, remove the following lines
             if (notSpacer) {
                 for (int i = 2 * prePadLength; i > 0; i--) { // in case of pad both sides but with different padding length
                 // for (int i = 2 * padLength; i > 0; i--) { // in case of pad both sides with the same padding length
