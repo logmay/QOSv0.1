@@ -72,10 +72,8 @@ classdef signalCore5511a < qes.hwdriver.icinterface_compatible
 				calllib('sc5511a','sc5511a_close_device',devicehandle);
 			end
 			
-			obj.freqlimits = ...
-				cell2mat(cellfun(@cell2mat,s.freq_limits(:),'UniformOutput',false));
-            obj.powerlimits =...
-				cell2mat(cellfun(@cell2mat,s.power_limits(:),'UniformOutput',false));
+			obj.freqlimits = reshape(s.freq_limits(:),[2,numel(s.freq_limits)/2])'; % GM, 20180226
+            obj.powerlimits = reshape(s.power_limits(:),[2,numel(s.freq_limits)/2])'; % GM, 20180226
 			
 			obj.cmdList = {'*IDN?'};
 			obj.ansList = {'SIGNALCORE,SC5511A,170410,1.0'};

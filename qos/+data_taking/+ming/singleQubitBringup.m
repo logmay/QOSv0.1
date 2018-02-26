@@ -47,9 +47,9 @@ setQSettings('channels.r_mw.instru','mwSrc_sc5511a');
 setQSettings('channels.r_mw.chnl',1);
 setQSettings('r_uSrcPower',-7);
 %%
-for ii=[1:3 5:9]
+for ii=[1:9]
     ramp=getQSettings('r_amp',qubits{ii})
-    setQSettings('r_amp',round(ramp/sqrt(10)),qubits{ii});
+    setQSettings('r_amp',round(ramp*1.3),qubits{ii});
 end
 %%
 setQSettings('g_XY_ln',80)

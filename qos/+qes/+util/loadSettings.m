@@ -82,6 +82,7 @@ function [data, varargout] = loadSettings(spath, fields, withHis)
                         else
                             data.(fieldname) = data_;
                         end
+%                         data.SETTINGS_PATH_ = spath; % GM, 20180226
                     end
                 elseif ~isempty(cidx) && cidx(end) > 1
                     fieldname = fileinfo(ii).name(1:cidx(end)-1);
@@ -156,6 +157,7 @@ function [data, varargout] = loadSettings(spath, fields, withHis)
             end
             if strcmp(fileinfo(ii).name(1:end-4),fields{1})
                 jdata = qes.util.loadJson(fullfile(spath,fileinfo(ii).name));
+%                 data.SETTINGS_PATH_ = spath; % GM, 20180226
                 hisFile = fullfile(spath,'_history',fileinfo(ii).name(1:end-4));
                 if numFields == 1
                     if isfield(jdata,fields{1})

@@ -82,24 +82,6 @@ classdef ustc_ad_v1 < qes.hwdriver.hardware
 
         function [I,Q] = Run(obj,chnl,N)
             
-            % benchmark
-%             numReps = [100:100:1900,2000:250:1e4];
-%             % numReps = [numReps,fliplr(numReps)];
-%             t = NaN(1,numel(numReps));
-%             t0 = numReps/3.3333e3;
-%             h = figure();
-%             for ii = 1:numel(numReps)
-%                 obj.ustcaddaObj.runReps = numReps(ii);
-%                 tic;
-%                 [I,Q] = obj.ustcaddaObj.Run(true);
-%                 t(ii) = toc;
-%                 plot(numReps,t-t0,'-');
-% %                 plot(numReps,t,'-+',numReps,t0,'--');
-%                 xlabel('stats');
-%                 ylabel('overhead time(s)');
-%                 drawnow();
-%             end
-
             obj.ustcaddaObj.runReps = N; % this only takes ~70us, the next line takes ~300ms
 			if GetDemodMode(obj,chnl)
 				[I,Q] = obj.ustcaddaObj.Run(obj.demodFreq{chnl});
