@@ -1,7 +1,7 @@
 function varargout = ramsey_dz(varargin)
 % ramsey_dz: ramsey oscillation, detune by z detune pulse
 % 
-% <_o_> = ramsey_dz('qubit',_c|o_,...
+% <_o_> = ramsey_dz('qubit',_c&o_,...
 %       'time',[_i_],'detuning',<[_f_]>,'phaseOffset',<_f_>,...
 %       'dataTyp',<'_c_'>,...   % S21 or P
 %       'notes',<_c_>,'gui',<_b_>,'save',<_b_>)
@@ -10,7 +10,7 @@ function varargout = ramsey_dz(varargin)
 % _c_: char or char string
 % _b_: boolean
 % _o_: object
-% a|b: default type is a, but type b is also acceptable
+% a&b: default type is a, but type b is also acceptable
 % []: can be an array, scalar also acceptable
 % {}: must be a cell array
 % <>: optional, for input arguments, assume the default value if not specified
@@ -24,35 +24,44 @@ function varargout = ramsey_dz(varargin)
     import sqc.*
     import sqc.op.physical.*
 
-    args = util.processArgs(varargin,{'phaseOffset',0,'detuning',0,'dataTyp','P',...
+    args = util.processArgs(varargin,{'r_avg',[],'phaseOffset',0,'detuning',0,'dataTyp','P',...
         'gui',false,'notes','','detuning',0,'save',true});
     q = data_taking.public.util.getQubits(args,{'qubit'});
+    
+    if ~isempty(args.r_avg)
+        q.r_avg=args.r_avg;
+    end
 
-    X2 = op.XY2(q,pi/2+args.phaseOffset);
-    X2_ = op.XY2(q,-pi/2);
-    I = op.detune(q);
+    X2 = op.XY2p(q,0);
+    I = gate.I(q);
+    Z = op.zBias4Spectrum(q);
+    R = measure.resonatorReadout_ss(q);
+ 
     switch args.dataTyp
         case 'P'
-            R = measure.resonatorReadout_ss(q);
             R.state = 2;
         case 'S21'
-            R = measure.resonatorReadout_ss(q,false,true);
             R.swapdata = true;
-            R.name = '|IQ|';
-            R.datafcn = @(x)abs(mean(x));
+            R.name = 'iq';
+            R.datafcn = @(x)mean(abs(x));
         otherwise
             throw(MException('QOS_ramsey_dz:unrcognizedDataTyp',...
                 'unrecognized dataTyp %s, available dataTyp options are P and S21.', args.dataTyp));
     end
+
+    X2_ = copy(X2);
+    X2.phase = args.phaseOffset;
     function procFactory(delay)
-        I.ln = delay;
-        proc = X2_*I*X2;
+%         X2_.f01=polyval(q.zpls_amp2f01,Z.amp)-3e6;
+%         X2.f01=polyval(q.zpls_amp2f01,Z.amp)-3e6;
+        Z.ln = delay;
+        proc = X2_*Z*X2;
         proc.Run();
         R.delay = proc.length;
     end
 
-    x = expParam(I,'df');
-    x.name = [q.name,' detunning'];
+    x = expParam(Z,'amp');
+    x.name = [q.name,' detunneAmp'];
     y = expParam(@procFactory);
     y.name = [q.name,' time'];
     s1 = sweep(x);
@@ -63,7 +72,7 @@ function varargout = ramsey_dz(varargin)
     e.name = 'Ramsey(Detune by Z)';
     e.sweeps = [s1,s2];
     e.measurements = R;
-    e.datafileprefix = sprintf('%s', q.name);
+    e.datafileprefix = sprintf('%s_Ramsey', q.name);
     if ~args.gui
         e.showctrlpanel = false;
         e.plotdata = false;

@@ -21,7 +21,7 @@ function varargout = correctf01byRamsey_1(varargin)
 % when resolution low, not recommended, use correctf01bySpc instead
 % Mod by GM, 20171026
 
-MAXFREQDRIFT = 30e6;
+MAXFREQDRIFT = 15e6;
 DELAYTIMERANGE = 500e-9;
 
 import data_taking.public.xmon.ramsey
@@ -34,7 +34,7 @@ if strcmp(da.name,'da_ustc_1')
 daSamplingRate = 2e9;
 end
 
-t = unique(round((0:4e-9:DELAYTIMERANGE)*daSamplingRate));
+t = unique(round((4e-9:4e-9:DELAYTIMERANGE)*daSamplingRate));
 e = ramsey('qubit',q,'mode','dp',...
     'time',t,'detuning',MAXFREQDRIFT,'gui',false,'save',false);
 Pp = e.data{1};

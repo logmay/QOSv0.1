@@ -53,10 +53,11 @@ function varargout = IQvsReadoutDelay(varargin)
     
     if args.gui
         ax = axes('Parent',figure('NumberTitle','off','Name','QOS |IQ vs Readout delay '));
-        plot(ax, e.data{1}(:,1),'.b');
-        hold(ax,'on');
-        plot(ax, e.data{1}(:,2),'.r');
-        legend(ax,{'|0>', '|1>'});
+        plot(ax,args.delay,abs(e.data{1}(:,1)-e.data{1}(:,2)))
+%         plot(ax, e.data{1}(:,1),'.b');
+%         hold(ax,'on');
+%         plot(ax, e.data{1}(:,2),'.r');
+%         legend(ax,{'|0>', '|1>'});
         drawnow;
     end
     e.notes = args.notes;

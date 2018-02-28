@@ -107,7 +107,7 @@ function varargout = zPulseRipplePhase(varargin)
                 args.delayTime,unwrap(data_phase(1,:))-unwrap(data_phase(2,:)),'-k');
             xlabel(ax,'delay time(DA sampling interval)');
             ylabel(ax,'\theta(rad)');
-            legend({'no z pulse','with zpulse','difference'});
+            legend({'no zpulse','with zpulse','difference'});
             drawnow;
         end
     end

@@ -1,6 +1,6 @@
 % bring up qubits - tuneup
 % Yulin Wu, 2017/3/11
-q = 'q1';
+q = 'q6';
 
 tuneup.iq2prob_01('qubits',q,'numSamples',1e4,'gui',true,'save',true);
 % tuneup.optReadoutFreq('qubit',q,'gui',true,'save',true);
@@ -23,20 +23,25 @@ for ii = 2:numel(qubits)
     setQSettings('r_avg',2000);
     XYGate ={'X/2'};
     for jj = 1:numel(XYGate)
-        tuneup.xyGateAmpTuner('qubit',q,'gateTyp',XYGate{jj},'AE',true,'AENumPi',41,'gui',true,'save',true);
+        tuneup.xyGateAmpTuner('qubit',q,'gateTyp',XYGate{jj},'AE',true,'AENumPi',21,'gui',true,'save',true);
     end
     tuneup.iq2prob_01('qubits',q,'numSamples',5e4,'gui',true,'save',true);
 end
 %%
-qubits = {'q1','q2','q3','q4','q5','q6','q7','q8','q9','q10','q11'};
-tuneup.iq2prob_01_parallel('qubits',qubits,'numSamples',1e4,'gui',false,'save',false);
+qubits = {'q1','q2','q3','q4','q5','q6','q7','q8','q9'};
+tuneup.iq2prob_01_parallel('qubits',qubits,'numSamples',5e4,'gui',false,'save',false);
+%% fully auto callibration
+for ii = 1:numel(qubits)
+    q = qubits{ii};
+    tuneup.iq2prob_01('qubits',q,'numSamples',5e4,'gui',true,'save',true);
+end
 %%
 tuneup.APE('qubit','q7',...
       'phase',-pi:pi/40:pi,'numI',4,...
       'gui',true,'save',true);
 %%
 setQSettings('r_avg',1500);
-tuneup.DRAGAlphaAPE('qubit','q11','alpha',[-1:0.05:1.5],...
+tuneup.DRAGAlphaAPE('qubit','q5','alpha',[-1:0.05:1.5],...
     'phase',0,'numI',10,...
     'gui',true,'save',true);
 %%
@@ -46,15 +51,18 @@ photonNumberCal('qubit','q1',...
 'ring_amp',5000,'ring_w',200,...
 'gui',true,'save',true);
 %%
-zDelay('zQubit','q5','xyQubit','q5','zAmp',3e4,'zLn',[],'zDelay',[-80:1:80],...
+zDelay('zQubit','q8','xyQubit','q8','zAmp',3e4,'zLn',[],'zDelay',[-100:1:100],...
        'gui',true,'save',true);
 %%
-setQSettings('r_avg',5000);
-% delayTime = [[0:1:20],[21:2:50],[51:5:100],[101:10:500],[501:50:3000]];
-delayTime = [-300:10:2e3];
-zPulseRipple('qubit','q7',...
+for ii=3
+    q=qubits{ii};
+setQSettings('r_avg',3000);
+% delayTime = [[0:1:20],[22:2:50],[55:5:100],[110:10:500],[550:50:3000],[3100:100:5000]];
+delayTime = [0:10:1.5e3];
+zPulseRipplePhase('qubit',q,...
         'delayTime',delayTime,...
-       'zAmp',7e3,'gui',true,'save',true);
+       'zAmp',3e4,'gui',true,'save',true);
+end
 %%
     s = struct();
     s.type = 'function';
@@ -83,12 +91,12 @@ zPulseRipple('qubit','q7',...
 % %     s.td = [900,400,200,100]; 
     
 %         q = 'q3';
-%     s.r = [0.021]; 
+%     s.r = [0.0]; 
 %     s.td = [900]; 
 
-%     q = 'q4';
-%     s.r = [0.0135,-0.005,0.017]; 
-%     s.td = [900,300,80]; 
+    q = 'q4';
+    s.r = [0.0]; 
+    s.td = [900]; 
 
 %     q = 'q5';
 %     s.r = [0.0125,0.01]; 
@@ -113,9 +121,9 @@ zPulseRipple('qubit','q7',...
 %       s.r = [0.013,0.007]; 
 %       s.td = [900,100]; 
       
-      q = 'q11';
-      s.r = [0.021,-0.012,0.009,0.005]; 
-      s.td = [900,400,150,60]; 
+%       q = 'q11';
+%       s.r = [0.021,-0.012,0.009,0.005]; 
+%       s.td = [900,400,150,60]; 
 
     xfrFunc = qes.util.xfrFuncBuilder(s);
     xfrFunc_inv = xfrFunc.inv();
@@ -129,11 +137,21 @@ zPulseRipple('qubit','q7',...
 %     fsamples = xfrFunc.samples_t(fi);
 %     hold on; plot(fi, fsamples(1:2:end),'-g');
 
-delayTime = [0:50:2000];
+delayTime = [0:10:1500];
 setQSettings('r_avg',3000);
-zPulseRipplePhase('qubit',q,'delayTime',delayTime,...
-       'xfrFunc',[xfrFunc_f],'zAmp',-2.5e4,'s',s,...
+data_phase=zPulseRipplePhase('qubit',q,'delayTime',delayTime,...
+       'xfrFunc',[xfrFunc_f],'zAmp',-3e4,'s',s,...
        'notes','','gui',true,'save',true);
+phasedifference=unwrap(data_phase(1,:))-unwrap(data_phase(2,:));
+%%
+f=@(a,x)(a(1)*exp(-x/a(3))+a(2));
+a=[0.01,0.1,900];
+b=nlinfit(delayTime,phasedifference,f,a);
+figure;plot(delayTime,phasedifference,delayTime,b(1)*exp(-delayTime/b(3))+b(2),'--');
+title(['td=' num2str(round(b(3)))])
+%%
+varargout = fminzPulseRipplePhase('qubit','q4','delayTime',[0:50:1500],'zAmp',-3e4,'MaxIter',40,...
+    'notes','','gui',true,'save',true)
 %%
 [sOpt,LPFBW] = zPulseXfrFunc('qubit','q1','delayTime',[30,100,300,700,1500],...
        'maxFEval',50,'numTerms',1,'rAmp0',[0.01],'td0',[700],'zAmp',-3e4);

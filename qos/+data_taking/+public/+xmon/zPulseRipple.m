@@ -21,7 +21,7 @@ function varargout = zPulseRipple(varargin)
     import sqc.*
     import sqc.op.physical.*
     
-    Z_LENGTH = 10000;
+    Z_LENGTH = 1000;
 
 	if nargin > 1  % otherwise playback
 		fcn_name = 'data_taking.public.xmon.zPulseRipple'; % this and args will be saved with data
